@@ -1,0 +1,5 @@
+build
+node_modules
+mytruffle/package-lock.json
+
+.local*
