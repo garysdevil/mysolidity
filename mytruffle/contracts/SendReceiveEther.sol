@@ -6,17 +6,27 @@ contract ReceiveEther {
     address public varAddress;
     uint256 public varNum;
 
-    function test() public {
-        varAddress = msg.sender;
-        varNum = 101;
-    }
-
     receive() external payable {
         // varAddress = msg.sender;
         // varNum = 200;
         //    当此函数体内有执行语句时，当另一个合约调用以下方法给此合约转账时，会返回false值，从而可能出发报错
         //     _to.transfer(msg.value);
         //     _to.send(msg.value);
+    }
+
+    function test() public {
+        varAddress = msg.sender;
+        varNum = 101;
+    }
+
+    // 查询这个合约的以太坊余额
+    function getSelfBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    // 查询特定地址下的以太坊余额
+    function getBalance(address addr) public view returns (uint) {
+        return address(addr).balance;
     }
 }
 
@@ -45,5 +55,4 @@ contract SendEther {
         (bool sent, bytes memory data) = _to.call{value: msg.value}("");
         require(sent, "Failed to send Ether");
     }
-    
 }

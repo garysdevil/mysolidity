@@ -16,7 +16,7 @@ contract('MyContract', (accounts) => {
     // 第2个测试
     it('can update the value', async () => {
         const myContract = await MyContract.deployed()
-        await myContract.test();
+        await myContract.value(10);
         const value = await myContract.varNum()
         assert.equal(value, '101')
     })
