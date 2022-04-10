@@ -25,16 +25,16 @@ contract Reentrance is Ownable{
     }
 
     // Helper function to check the balance of this contract
-    function getBalance() public view returns (uint) {
+    function getBalance() onlyOwner external view returns (uint) {
         return address(this).balance;
     }
 
-    function setPreyAddre(address addr) public{
+    function setPreyAddre(address addr) onlyOwner external {
         preyAddr = addr;
     }
 
     // 提取款项
-    function withdraw(uint amount) onlyOwner  public {
+    function withdraw(uint amount) onlyOwner external {
         if (amount < address(this).balance){
             payable(msg.sender).transfer(amount);
         }
