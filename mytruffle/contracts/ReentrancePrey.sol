@@ -1,16 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.2 <0.8.0;
 
-contract Prey {
+// 防止重入的修饰器
+contract ReEntrancyGuard {
+    bool internal locked;
+
+    modifier noReentrant() {
+        require(!locked, "No re-entrancy");
+        locked = true;
+        _;
+        locked = false;
+    }
+}
+
+contract Prey is ReEntrancyGuard{
     mapping(address => uint) public balances;
     function deposit() public payable {
         balances[msg.sender] += msg.value;
     }
 
-    function withdraw(uint amount) public {
+    function withdraw(uint amount) public noReentrant{
         require(balances[msg.sender] >= amount);
     
-        (bool sent, ) = msg.sender.call{value: amount}("");
+        (bool sent,) = msg.sender.call{value: amount}("");
         require(sent, "Failed to send Ether");
 
         // balances[msg.sender] = 0;
