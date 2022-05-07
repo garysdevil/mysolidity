@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0; 
 
+// 合约间的相互调用 方式三 低级调用。
 contract CallTestContract {
     address public temp11;
     uint256 public temp22;
