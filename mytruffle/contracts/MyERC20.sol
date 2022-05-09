@@ -13,6 +13,6 @@ contract MyERC20 is ERC20 ('DOG', 'dog'){
         _symbol = symbol_;
     }
     function mint(address account, uint256 amount) public{
-        _mint( account, amount);
+        _mint(account, amount);
     }
 }
