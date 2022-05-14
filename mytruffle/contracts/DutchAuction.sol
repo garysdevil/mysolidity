@@ -9,6 +9,7 @@ interface IERC721{
     ) external;
 }
 
+// 每次，当某个NFT进行荷兰拍卖时，都需要部署合约
 contract DutchAuction{
     uint private constant DURATION = 7 days; // 被保存时，单位为秒
 

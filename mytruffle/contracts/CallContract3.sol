@@ -31,6 +31,7 @@ contract CallTestContract {
         // 使用 Selector 进行abi编码，而不是 Signature 进行abi编码。
         // Signature 方式的abi编码最终也会编译为 Selector 。
         // 通过 Selector 方式，可以防止由于输入参数写错了而导致调用失败。
+        // 但是必须知道合约的接口代码
         (bool success,) = contractAddr.call(abi.encodeWithSelector(TestContract.setFunc2.selector,22)); require(success);
     }
 
