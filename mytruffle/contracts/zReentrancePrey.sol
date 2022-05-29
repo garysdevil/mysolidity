@@ -13,16 +13,17 @@ contract ReEntrancyGuard {
     }
 }
 
-contract Prey is ReEntrancyGuard{
-    mapping(address => uint) public balances;
+contract Prey is ReEntrancyGuard {
+    mapping(address => uint256) public balances;
+
     function deposit() public payable {
         balances[msg.sender] += msg.value;
     }
 
-    function withdraw(uint amount) public noReentrant{
+    function withdraw(uint256 amount) public noReentrant {
         require(balances[msg.sender] >= amount);
-    
-        (bool sent,) = msg.sender.call{value: amount}("");
+
+        (bool sent, ) = msg.sender.call{value: amount}("");
         require(sent, "Failed to send Ether");
 
         // balances[msg.sender] = 0;
@@ -30,7 +31,7 @@ contract Prey is ReEntrancyGuard{
     }
 
     // Helper function to check the balance of this contract
-    function getBalance() public view returns (uint) {
+    function getBalance() public view returns (uint256) {
         return address(this).balance;
     }
 }

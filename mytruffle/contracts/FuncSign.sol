@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 // 函数签名 // 在EVM中如何在合约中找到一个函数
-contract funcSign{
+contract funcSign {
     // 获取函数选择器
-    function getSelector(string calldata _func) external pure returns(bytes4){
-        return(bytes4(keccak256(bytes(_func))));
+    function getSelector(string calldata _func) external pure returns (bytes4) {
+        return (bytes4(keccak256(bytes(_func))));
     }
 
     // 输入 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4 9
@@ -14,7 +14,8 @@ contract funcSign{
     // 0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4
     // 0000000000000000000000000000000000000000000000000000000000000009
     event Log(bytes data);
-    function test(address _to, uint _amount) external{
+
+    function test(address _to, uint256 _amount) external {
         emit Log(msg.data);
     }
 }
