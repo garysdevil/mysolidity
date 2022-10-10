@@ -37,7 +37,7 @@ truffle develop
 
 
 # 编译合约，默认为编译自上次编译之后更新过的合约
-truffile compile
+truffle compile
 # --all：编译全部合约
 # --list ：列出来自solc-bin的最近稳定版本清单
 
