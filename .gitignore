@@ -3,5 +3,5 @@ node_modules
 mytruffle/package-lock.json
 .compiler
 
-.local.*
-local.*
+.local*
+local*
