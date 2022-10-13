@@ -40,17 +40,17 @@ const keystoreExample = _ => {
     console.log(web3Obj.eth.accounts.encrypt(privateKey, password));
 }
 
-// 获取账户余额
+// 获取账户余额，返回wei为单位的代币余额
 const getBalance = async address => {
-    await web3Obj.eth.getBalance(address, (err, wei) => {
+    return await web3Obj.eth.getBalance(address, (err, wei) => {
         if (err) {
             throw new Error('Function getBalance:' + err)
             // exit(1)
         }
         // 余额单位从wei转换为eth
         balance = web3Obj.utils.fromWei(wei, 'ether')
-        console.log("balance: " + balance)
-        // return balance
+        console.log("address= " + address)
+        console.log("balance= " + balance)
     })
 }
 
@@ -68,7 +68,7 @@ const getGasPrice = async _ => {
         }
         // 余额单位从wei转换为eth
         gasPrice = web3Obj.utils.fromWei(wei, 'Gwei')
-        console.log("gasPrice: " + gasPrice + "Gwei")
+        console.log("gasPrice maybe is: " + gasPrice + "Gwei")
     })
 }
 
@@ -76,10 +76,11 @@ const getGasPrice = async _ => {
 const getEstimateGas = async (tx) => {
     return await web3Obj.eth.estimateGas(tx, (err, gas) => {
         if (err) {
-            throw new Error('Function estimateGas:' + err)
+            // throw new Error('Function estimateGas:' + err)
+            console.log('Function estimateGas:' + err);
             // exit(1)
         }
-        console.log("gas: " + gas)
+        console.log("Tx estimating gas is: " + gas)
     })
 }
 
@@ -95,15 +96,15 @@ const getAllEvent = async _ => {
     )
 }
 
-// 签名发送交易
+// 签名发送交易 // 发送交易前先评估费用，否则可能会由于设置的gasPrice过低，导致交易失败
 // web3Obj.js 获取metamask签名进行交易 https://www.cxyzjd.com/article/xilibi2003/82700542
 // const tx = {
 //     // nonce值必须=（此账户已完成的交易数+1）。
 //     // 可以缺省。
 //     nonce: '0x00',   // web3.utils.toHex(nonceNum)
 //     // 该交易每单位gas的价格, Gas价格目前以Gwei为单位（即10^9wei）, 其范围是大于0.1Gwei, 可进行灵活设置。
-//     // 可以缺省。
-//     gasPrice: '0x2710',  // web3.utils.toHex(10e9)
+//     // 可以缺省。默认支付 web3Obj.eth.estimateGas(tx) Gas单位价格，应该是可以执行成功的最低价格。
+//     gasPrice: '0x1000000000',  // web3.utils.toHex(10e9)
 //     // 合约地址 或 账户地址.
 //     to: contractAddress,
 //     // gasLimit, 该交易支付的最高gas上限。该上限能确保在出现交易执行问题（比如陷入无限循环）之时, 交易账户不会耗尽所有资金。一旦交易执行完毕, 剩余所有gas会返还至交易账户。
@@ -147,6 +148,15 @@ const signTransaction = async (tx, privateKey) => {
 
 }
 
+const evaluateTxGas = async (tx) => {
+    gasPrice = await getGasPrice()
+    estimateGas = await getEstimateGas(tx)
+    tx_wei = estimateGas * gasPrice;
+    ether = web3Obj.utils.fromWei(tx_wei.toString(), 'ether')
+    console.log("This tx maybe spend " + ether + "ETH");
+    return tx_wei;
+}
+
 
 module.exports = {
     web3Obj,
@@ -156,8 +166,9 @@ module.exports = {
     getAllEvent,
     signTransaction,
     getGasPrice,
-    getEstimateGas
+    getEstimateGas,
+    evaluateTxGas
 };
 
 // 导入方式
-// const { web3Obj, createAccount, getBalance, getBlockNumber, getAllEvent, signTransaction, getGasPrice, getEstimateGas } = require('./web3RPC')
+// const { web3Obj, createAccount, getBalance, getBlockNumber, getAllEvent, signTransaction, getGasPrice, getEstimateGas, evaluateTxGas } = require('./web3RPC')
