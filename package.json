@@ -4,6 +4,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.19"
   },
   "dependencies": {
-    "solc": "^0.8.14-fixed"
+    "solc": "^0.8.14-fixed",
+    "winston": "^3.8.2"
   }
 }

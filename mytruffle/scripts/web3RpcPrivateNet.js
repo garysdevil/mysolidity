@@ -21,6 +21,22 @@ const sendTransaction = async (addressFrom, addressTo) =>{
     });
 }
 
+// 创建账户/解锁账户  
+// 私链上创建账户
+// 非私链上, 请务必不要进行解锁操作, 否则任何第三方都可以直接通过你的账户地址进行相关操作
+const createAccount = async _ => {
+    // 方式二
+    password="123456"
+    await web3Obj.eth.personal.newAccount(password,(err, address)=>{
+        console.log(address)
+        // 地址 密码 解锁时间
+        web3Obj.eth.personal.unlockAccount(address, password, 14400).then(console.log('Account unlocked!'));
+    });
+    // 返回账户列表；通过 web3Obj.eth.accounts.create() 创建的账户不会被添加到这个列表中
+    await web3Obj.eth.personal.getAccounts().then(console.log);
+}
+
+
 
 // 私有网络，合约操作。
 const private_network = _ =>{
