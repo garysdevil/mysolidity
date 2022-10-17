@@ -4,7 +4,9 @@
     "ini": "^2.0.0",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.2.31",
-    "web3": "^1.8.0"
+    "web3": "^1.8.0",
+    "@ethereumjs/tx": "^4.0.0",
+    "ethereumjs-util": "^7.1.5"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^4.5.0"

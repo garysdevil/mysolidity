@@ -1,14 +1,13 @@
 const fs = require('fs')
 const ini = require('ini')
 
-const { Web3, web3Obj, createAccount, getBalance, getBlockNumber, getAllEvent, signAndsendTransactionOldway, signTransaction, sendSignedTransaction, getGasPrice, getEstimateGas, evaluateTxFee } = require('./web3Rpc')
+const { Web3, web3Obj, createAccount, getBalance, getAcountNonce, getBlockNumber, getAllEvent, signAndsendTransactionOldway, signTransaction, sendSignedTransaction, signTransaction2, sendSignedTransaction2, getGasPrice, getEstimateGas, evaluateTxFee } = require('./web3Rpc')
 
 const config = ini.parse(fs.readFileSync('./.local.config.ini', 'utf-8'))
 const private_key = config.private_key
 
-const create_transfer_tx = (to_address, ether) => {
-    const value = web3Obj.utils.toWei(ether, "ether");
-    console.log(value)
+const create_transfer_tx = (to_address, value_ETH) => {
+    const value = web3Obj.utils.toWei(value_ETH, "ether");
     const tx = {
         to: to_address,
         gas: 21000,
@@ -17,19 +16,47 @@ const create_transfer_tx = (to_address, ether) => {
     };
     return tx
 }
-const create_transfer_tx_0x = (to_address, ether) => {
-    const value = web3Obj.utils.toWei(ether, "ether");
+
+const create_exact_transfer_tx = (nonce, to_address, value_ETH, gasPrice_Gwei) => {
+    const value = web3Obj.utils.toWei(value_ETH, "ether");
+    const gasPrice = web3Obj.utils.toWei(gasPrice_Gwei, "Gwei");
+    const tx = {
+        nonce: nonce,
+        to: to_address,
+        gas: 21000,
+        getGasPrice: gasPrice,
+        value: value,
+        data: '',
+    };
+    return tx
+}
+
+
+const create_transfer_tx_1559 = (to_address, value_ETH, maxFeePerGas_Gwei, maxPriorityFeePerGas_Gwei) => {
+    const value = web3Obj.utils.toWei(value_ETH, "ether");
+    const maxFeePerGas = web3Obj.utils.toWei(maxFeePerGas_Gwei, "Gwei");
+    const maxPriorityFeePerGas = web3Obj.utils.toWei(maxPriorityFeePerGas_Gwei, "Gwei");
     const tx = {
         to: to_address,
-        gas: Web3.utils.toHex(21010),
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        gas: 21000,
+        value: value,
+        data: '',
+    };
+    return tx
+}
+
+const create_transfer_tx_0x = (to_address, value_ETH) => {
+    const value = web3Obj.utils.toWei(value_ETH, "ether");
+    const tx = {
+        to: to_address,
+        gas: Web3.utils.toHex(22000),
         value: Web3.utils.toHex(value),
         data: Web3.utils.toHex(''),
     };
     return tx
 }
-
-const transfer_raw_tx = create_transfer_tx('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001');
-const transfer_raw_tx_0x = create_transfer_tx('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001');
 
 
 // 例子
@@ -46,33 +73,48 @@ const keystoreExample = _ => {
 
 
 (async _ => {
-    // console.log('\n getBlockNumber===========');
-    // await getBlockNumber()
-    
-    // console.log('\n getGasPrice===========');
-    // await getGasPrice()
+    const transfer_raw_tx = create_transfer_tx('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001');
+    const transfer_raw_tx_0x = create_transfer_tx_0x('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001');
+    const transfer_raw_tx_2 = create_exact_transfer_tx(64, '0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001', '30');
+    const transfer_raw_tx_1559 = create_transfer_tx_1559('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001', '20', '20');
+    const raw_tx = transfer_raw_tx_1559;
 
     // console.log('\n createAccount===========');
     // await createAccount();
 
-    // 测试失败
+    console.log('\n getBlockNumber===========');
+    await getBlockNumber()
+    
     // console.log('getBalance===========');
     // await getBalance("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
 
+    // console.log('\n getGasPrice===========');
+    // await getGasPrice()
+
     // console.log('\n getEstimateGas===========');
-    // await getEstimateGas(transfer_raw_tx);
+    // await getEstimateGas(raw_tx);
 
-    // console.log('\n evaluateTxFee===========');
-    // await evaluateTxFee(transfer_raw_tx)
-
-    // console.log('\n signAndsendTransactionOldway===========');
-    // await signAndsendTransactionOldway(transfer_raw_tx, private_key);
+    console.log('\n evaluateTxFee===========');
+    await evaluateTxFee(raw_tx)
+    
+    // console.log('\n getAcountNonce===========');
+    // nonceObj = await getAcountNonce("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
+    // console.log(nonceObj);
 
     // console.log('\n signTransaction===========');
-    // let signedTxStr = signTransaction(transfer_raw_tx_0x, private_key, 'goerli');
+    // console.log(raw_tx);
+    // let signedTx = await signTransaction(raw_tx, private_key);
+    // console.log(signedTx);
+   
+    // console.log('\n sendSignedTransaction===========');
+    // let txFee_ETH = await sendSignedTransaction(signedTx);
+    // console.log(txFee_ETH, "ETH");
+
+    // console.log('\n signTransaction2===========');
+    // let signedTxStr = signTransaction2(transfer_raw_tx_0x, private_key, 'goerli');
     // console.log(signedTxStr);
 
-    // 测试失败
-    // console.log('\n sendSignedTransaction===========');
-    // sendSignedTransaction(signedTxStr);
+    // // 测试失败
+    // console.log('\n sendSignedTransactio2===========');
+    // sendSignedTransaction2(signedTxStr);
 })()
