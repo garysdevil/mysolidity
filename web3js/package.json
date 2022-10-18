@@ -1,0 +1,16 @@
+{
+  "name": "web3js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "gary",
+  "license": "ISC",
+  "dependencies": {
+    "ini": "^3.0.1",
+    "web3": "^1.8.0",
+    "winston": "^3.8.2"
+  }
+}

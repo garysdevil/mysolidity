@@ -2,7 +2,7 @@
 
 ## 编译运行
 
-- 代码格式化
+- Solidity代码格式化
     - 使用prettier格式化代码  
         - https://github.com/prettier-solidity/prettier-plugin-solidity  
         - https://prettier.io/
