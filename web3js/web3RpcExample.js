@@ -1,7 +1,7 @@
 const fs = require('fs')
 const ini = require('ini')
 
-const { Web3, web3Obj, createAccount, getBalance, getAcountNonce, getBlockNumber, getAllEvent, signAndsendTransactionOldway, signTransaction, sendSignedTransaction, signTransaction2, sendSignedTransaction2, getGasPrice, getEstimateGas, evaluateTxFee } = require('./web3Rpc')
+const { Web3, web3Obj, createAccount, getBalance, getAcountNonce, getBlockNumber, getAllEvent, signAndsendTransactionOldway, signTransaction, sendSignedTransaction, signTransaction2, sendSignedTransaction2, getGasPrice, getEstimateGas, evaluateTxFee, getContractInstance } = require('./web3Rpc')
 
 const config = ini.parse(fs.readFileSync('./.local.config.ini', 'utf-8'))
 const private_key = config.private_key
@@ -71,6 +71,23 @@ const keystoreExample = _ => {
     console.log(web3Obj.eth.accounts.encrypt(privateKey, password));
 }
 
+const testContract = async _ => {
+    await getBalance("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
+    let conObj = await getContractInstance('./local_abi/coin.json', '0x788231cd5d968b11033630f3478049d5e0f40aa0');
+    let data = conObj.methods.mint('0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D', 10).encodeABI();
+    const tx = {
+        // nonce: 75,
+        to: '0x788231cd5d968b11033630f3478049d5e0f40aa0',
+        maxPriorityFeePerGas: web3Obj.utils.toWei('4', "Gwei"),
+        // maxFeePerGas: web3Obj.utils.toWei('5', "Gwei"),
+        gas: 7790298, // await getEstimateGas(tx);
+        data
+    };
+    let signedTx = await signTransaction(tx, private_key);
+    let receipt = await sendSignedTransaction(signedTx);
+    console.log(receipt, "ETH");
+    await getBalance("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
+}
 
 (async _ => {
     const transfer_raw_tx = create_transfer_tx('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001');
@@ -94,8 +111,8 @@ const keystoreExample = _ => {
     // console.log('\n getEstimateGas===========');
     // await getEstimateGas(raw_tx);
 
-    console.log('\n evaluateTxFee===========');
-    await evaluateTxFee(raw_tx)
+    // console.log('\n evaluateTxFee===========');
+    // await evaluateTxFee(raw_tx)
     
     // console.log('\n getAcountNonce===========');
     // nonceObj = await getAcountNonce("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
@@ -107,8 +124,8 @@ const keystoreExample = _ => {
     // console.log(signedTx);
    
     // console.log('\n sendSignedTransaction===========');
-    // let txFee_ETH = await sendSignedTransaction(signedTx);
-    // console.log(txFee_ETH, "ETH");
+    // let receipt = await sendSignedTransaction(signedTx);
+    // console.log(receipt, "ETH");
 
     // console.log('\n signTransaction2===========');
     // let signedTxStr = signTransaction2(transfer_raw_tx_0x, private_key, 'goerli');
@@ -117,4 +134,8 @@ const keystoreExample = _ => {
     // // 测试失败
     // console.log('\n sendSignedTransactio2===========');
     // sendSignedTransaction2(signedTxStr);
+
+    console.log('\n getContractInstance===========');
+    await testContract();
+
 })()

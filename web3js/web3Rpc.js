@@ -88,6 +88,7 @@ const getBlockNumber = async _ => {
 }
 
 // 获取当前的Gas价格，返回值的单位为 wei
+// gasPrice = 当前区块的 baseFee + 0.2540477990000003Gwei
 const getGasPrice = async _ => {
     return await web3Obj.eth.getGasPrice((err, wei) => {
         if (err) {
@@ -128,11 +129,11 @@ const evaluateTxFee = async (tx) => {
 //     nonce: '0',   // web3.utils.toHex(nonceNum)
 //     // 该交易每单位gas的价格上限, Gas价格目前以Gwei为单位（即10^9wei）, 其范围是大于0.1Gwei, 可进行灵活设置。
 //     // EIP-1559 后，如果没有设置maxPriorityFeePerGas和maxFeePerGas，则默认 maxPriorityFeePerGas 和 maxFeePerGas 都等于 gasPrice。
-//     // 可以缺省。默认支付 web3Obj.eth.estimateGas(tx) Gas单位价格，可能可以执行成功的最低价格。
+//     // 缺省值为当前区块的 baseFee + 0.2540477990000003Gwei
 //     gasPrice: '1000000000',  // web3.utils.toHex(10e9) 
 //     // 优先打包的矿工费，缺省值为 2.5 Gwei 
 //     maxPriorityFeePerGas,
-//     // 缺省值为上一个区块的 baseFeePerGas * 2 + maxPriorityFeePerGas
+//     // web3.js 缺省值 baseFeePerGas * 2 + maxPriorityFeePerGas
 //     maxFeePerGas,
 //     // 合约地址 或 账户地址.
 //     to: contractAddress,
@@ -147,6 +148,8 @@ const signTransaction = async (tx, privateKey) => {
     const signedTx = await web3Obj.eth.accounts.signTransaction(tx, privateKey).catch((err) => {
         console.log("Function signTransaction:", err)
     });
+    const transactionHash = signedTx.transactionHash;
+    console.log(JSON.stringify({ transactionHash }));
     return signedTx;
 }
 
@@ -157,10 +160,11 @@ const sendSignedTransaction = async (signedTx) => {
         if (err) {
             console.log("Function sendSignedTransaction err:", err)
         } else {
-            console.log("Function sendSignedTransaction receipt:", receipt)
+            // console.log("Function sendSignedTransaction receipt:", receipt)
             let txFee_wei = receipt.effectiveGasPrice * receipt.gasUsed;
             let txFee_ETH = web3Obj.utils.fromWei(txFee_wei.toString(), "ether");
-            return txFee_ETH;
+            console.log(JSON.stringify({ txFee_ETH }));
+            return receipt;
         }
     });
 
@@ -212,6 +216,16 @@ const sendSignedTransaction2 = async (signedTransaction) => {
     })
 }
 
+const getContractInstance = async (abiPath, contractAddress) =>{
+    // 获取合约实例
+    const source = fs.readFileSync(abiPath, 'utf8'); 
+    // abi = JSON.parse(source).abi
+    abi = JSON.parse(source)
+    const contractInstance = new web3Obj.eth.Contract(abi, contractAddress)
+
+    return contractInstance;
+}
+
 // 查看合约之前的所有事件
 const getAllEvent = async contractInstance => {
     await contractInstance.getPastEvents(
@@ -231,14 +245,15 @@ module.exports = {
     getBalance,
     getAcountNonce,
     getBlockNumber,
-    getAllEvent,
     signTransaction,
     sendSignedTransaction,
     signTransaction2,
     sendSignedTransaction2,
     getGasPrice,
     getEstimateGas,
-    evaluateTxFee
+    evaluateTxFee,
+    getAllEvent,
+    getContractInstance
 };
 
 // 导入方式
