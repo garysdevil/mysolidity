@@ -2,7 +2,7 @@ const Web3 = require('web3')
 const fs = require('fs')
 const ini = require('ini')
 
-const config = ini.parse(fs.readFileSync('./.local.config.ini', 'utf-8'))
+const config = ini.parse(fs.readFileSync('../conf/.local.config.ini', 'utf-8'))
 const rpcURL = config.node.rpc_url
 
 const web3Obj = new Web3(rpcURL) // 创建Web3连接

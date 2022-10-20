@@ -2,6 +2,7 @@
 // import { bufferToHex } from 'ethereumjs-util';
 const Web3 = require('web3')
 const fs = require('fs')
+const path = require('path')
 const ini = require('ini')
 
 const winston = require('winston');
@@ -17,7 +18,8 @@ const winston = require('winston');
 // });
 
 const init = _ => {
-    const config = ini.parse(fs.readFileSync('./.local.config.ini', 'utf-8'))
+    const conf_path = path.join(__dirname, "../conf/.local.config.ini");
+    const config = ini.parse(fs.readFileSync(conf_path, 'utf-8'))
     const rpcURL = config.node.rpc_url
     // const ws_url = config.node.ws_url
 
@@ -102,8 +104,8 @@ const getGasPrice = async _ => {
 }
 
 // 评估花费的Gas数量
-const getEstimateGas = async (tx) => {
-    return await web3Obj.eth.estimateGas(tx, (err, gas) => {
+const getEstimatedGas = async (signedTx) => {
+    return await web3Obj.eth.estimateGas(signedTx, (err, gas) => {
         if (err) {
             // throw new Error('Function estimateGas:' + err)
             console.log('Function estimateGas:' + err);
@@ -114,17 +116,17 @@ const getEstimateGas = async (tx) => {
 }
 
 // 评估完成此交易需要花费的以太坊代币
-const evaluateTxFee = async (tx) => {
+const getEstimatedTxFee = async (signedTx) => {
     gasPrice = await getGasPrice()
-    estimateGas = await getEstimateGas(tx)
+    estimateGas = await getEstimatedGas(signedTx)
     tx_wei = estimateGas * gasPrice;
     ether = web3Obj.utils.fromWei(tx_wei.toString(), 'ether')
-    console.log("This tx maybe spend " + ether + "ETH");
+    console.log("This transaction maybe spend " + ether + "ETH");
     return tx_wei;
 }
 
 // 签名发送交易 // 发送交易前先评估费用，否则可能会由于设置的gasPrice过低，导致交易失败
-// const tx = {
+// const rawTx = {
 //     // 此账户已完成的交易数+1。可以缺省。
 //     nonce: '0',   // web3.utils.toHex(nonceNum)
 //     // 该交易每单位gas的价格上限, Gas价格目前以Gwei为单位（即10^9wei）, 其范围是大于0.1Gwei, 可进行灵活设置。
@@ -144,8 +146,8 @@ const evaluateTxFee = async (tx) => {
 //     // this encodes the ABI of the method and the arguements；如果进行转账操作则设置data为空字符串。
 //     data: contractInstance.methods.buy(1, ["0x"]).encodeABI() 
 // };
-const signTransaction = async (tx, privateKey) => {
-    const signedTx = await web3Obj.eth.accounts.signTransaction(tx, privateKey).catch((err) => {
+const signTransaction = async (rawTx, privateKey) => {
+    const signedTx = await web3Obj.eth.accounts.signTransaction(rawTx, privateKey).catch((err) => {
         console.log("Function signTransaction:", err)
     });
     const transactionHash = signedTx.transactionHash;
@@ -156,7 +158,7 @@ const signTransaction = async (tx, privateKey) => {
 // 返回交易的实际gas费开销
 const sendSignedTransaction = async (signedTx) => {
     // 广播交易
-    return await web3Obj.eth.sendSignedTransaction(signedTx.raw || signedTx.rawTransaction).then( (receipt, err) => {
+    return await web3Obj.eth.sendSignedTransaction(signedTx.raw || signedTx.rawTransaction).then((receipt, err) => {
         if (err) {
             console.log("Function sendSignedTransaction err:", err)
         } else {
@@ -179,46 +181,9 @@ const sendSignedTransaction = async (signedTx) => {
     // }).on('error', console.error);
 }
 
-const signTransaction2 = (rawTx, privateKey, network) => {
-    // const { Chain, Common, Hardfork } = require('@ethereumjs/common');
-    const Tx = require('@ethereumjs/tx').Transaction;
-    const bufferToHex = require('ethereumjs-util').bufferToHex;
-    // const tx = Transaction.fromTxData(rawTx, { common })
-
-    let tx = new Tx(rawTx, { chain: 'Goerli' });
-
-    let private_key_byte = Buffer.from(privateKey, 'hex');
-    let signedTx = tx.sign(private_key_byte); // 使用require('@ethereumjs/tx').Transaction进行签名的tx，tx里面的信息必须都是16进制的。
-
-    if (signedTx.validate() && bufferToHex(signedTx.getSenderAddress()) === '0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D') {
-        console.log('Correctly created the tx')
-    } else {
-        console.error('Invalid tx')
-    }
-
-    let serializedTx = signedTx.serialize();
-    let signedTxStr = '0x' + serializedTx.toString('hex');
-
-    return signedTxStr;
-}
-
-const sendSignedTransaction2 = async (signedTransaction) => {
-    // web3Obj.eth.sendSignedTransaction(signedTransaction).on('receipt', console.log);
-    // 广播交易
-    web3Obj.eth.sendSignedTransaction(signedTransaction, (err, txHash) => {
-        if (!err) {
-            hash = txHash
-            console.log("success:" + txHash)
-            return hash
-        } else {
-            console.log(err);
-        }
-    })
-}
-
-const getContractInstance = async (abiPath, contractAddress) =>{
+const getContractInstance = async (abiPath, contractAddress) => {
     // 获取合约实例
-    const source = fs.readFileSync(abiPath, 'utf8'); 
+    const source = fs.readFileSync(abiPath, 'utf8');
     // abi = JSON.parse(source).abi
     abi = JSON.parse(source)
     const contractInstance = new web3Obj.eth.Contract(abi, contractAddress)
@@ -239,22 +204,19 @@ const getAllEvent = async contractInstance => {
 }
 
 module.exports = {
-    Web3,
-    web3Obj,
     createAccount,
     getBalance,
     getAcountNonce,
     getBlockNumber,
     signTransaction,
     sendSignedTransaction,
-    signTransaction2,
-    sendSignedTransaction2,
     getGasPrice,
-    getEstimateGas,
-    evaluateTxFee,
+    getEstimatedGas,
+    getEstimatedTxFee,
     getAllEvent,
     getContractInstance
 };
 
 // 导入方式
-// const { web3Obj, createAccount, getBalance, getBlockNumber, getAllEvent, sendSignedTransaction, getGasPrice, getEstimateGas, evaluateTxFee } = require('./web3RPC')
+// const { createAccount, getBalance, getAcountNonce, getBlockNumber, getContractInstance, getEstimatedTxFee, getAllEvent, getEstimatedGas, getGasPrice } = require('./web3RPC')
+// const { signTransaction, sendSignedTransaction }  = require('./web3RPC')
