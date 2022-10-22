@@ -70,7 +70,7 @@ const getAcountNonce = async wallet_address => {
             return nonce;
         }
     });
-    let nonce_pending = await web3Obj.eth.getTransactionCount('0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D', "pending", (err, nonce) => {
+    let nonce_pending = await web3Obj.eth.getTransactionCount(wallet_address, "pending", (err, nonce) => {
         if (err) {
             console.error('Function getAcountNonce2 ' + err)
         } else {

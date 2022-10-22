@@ -3,12 +3,15 @@ const ini = require('ini')
 const path = require('path')
 const Web3Utils = require('web3-utils');
 
-const { createAccount, getBalance, getAcountNonce, getBlockNumber, getContractInstance, getEstimatedTxFee, getAllEvent, getEstimatedGas, getGasPrice } = require('./web3RPC')
-const { signTransaction, sendSignedTransaction } = require('./web3RPC')
+const web3RPCPath = path.join(__dirname, "../service/web3RPC");
+const { createAccount, getBalance, getAcountNonce, getBlockNumber, getContractInstance, getEstimatedTxFee, getAllEvent, getEstimatedGas, getGasPrice } = require(web3RPCPath)
+const { signTransaction, sendSignedTransaction } = require(web3RPCPath)
 
-const conf_path = path.join(__dirname, "../conf/.local.config.ini");
-const config = ini.parse(fs.readFileSync(conf_path, 'utf-8'))
-const private_key = config.private_key
+const confPath = path.join(__dirname, "../conf/.local.config.ini");
+const config = ini.parse(fs.readFileSync(confPath, 'utf-8'));
+const walletPrivateKey = config.wallet_private_key;
+const walletAddress = config.wallet_address;
+const walletAddressA = config.wallet_address_a;
 
 const create_transfer_tx = (to_address, value_ETH) => {
     const value = Web3Utils.toWei(value_ETH, "ether");
@@ -63,24 +66,25 @@ const create_transfer_tx_0x = (to_address, value_ETH) => {
 }
 
 const testGetContractInstance = async _ => {
-    await getBalance("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
-    let conObj = await getContractInstance('./local_abi/coin.json', '0x788231cd5d968b11033630f3478049d5e0f40aa0');
-    let data = conObj.methods.mint('0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D', 10).encodeABI();
+    await getBalance(walletAddress);
+    const abiPath = path.join(__dirname, "./coinABI.json");
+    let conObj = await getContractInstance(abiPath, '0xEEF78C80a98B3410260711f27Ab650043478Ad80');
+    let data = conObj.methods.mint(walletAddress, 10).encodeABI();
     const rawTx = {
         // nonce: 75,
-        to: '0x788231cd5d968b11033630f3478049d5e0f40aa0',
+        to: '0xEEF78C80a98B3410260711f27Ab650043478Ad80',
         maxPriorityFeePerGas: Web3Utils.toWei('4', "Gwei"),
         // maxFeePerGas: Web3Utils.toWei('5', "Gwei"),
         gas: 7790298,
         data
     };
     // rawTx.gas = await getEstimatedGas(rawTx);
-    let signedTx = await signTransaction(rawTx, private_key);
+    let signedTx = await signTransaction(rawTx, walletPrivateKey);
     await getEstimatedGas(signedTx);
     let receipt = await sendSignedTransaction(signedTx);
     // console.log(receipt);
-    await getBalance("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
-    conObj.methods.balances("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D").call({ from: '0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D' }, (err, result) => {
+    await getBalance(walletAddress);
+    conObj.methods.balances(walletAddress).call({ from: walletAddress }, (err, result) => {
         if (err) {
             console.log("conObj.methods.balances", err)
         } else {
@@ -90,10 +94,10 @@ const testGetContractInstance = async _ => {
 }
 
 const test = async _ => {
-    const transfer_raw_tx = create_transfer_tx('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001');
-    const transfer_raw_tx_0x = create_transfer_tx_0x('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001');
-    const transfer_raw_tx_exact = create_transfer_tx_exact(64, '0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001', '30');
-    const transfer_raw_tx_1559 = create_transfer_tx_1559('0x1d3cD178C1c76fD903431efFD1B96F2022723c2a', '0.001', '50', '10');
+    const transfer_raw_tx = create_transfer_tx(walletAddressA, '0.001');
+    const transfer_raw_tx_0x = create_transfer_tx_0x(walletAddressA, '0.001');
+    const transfer_raw_tx_exact = create_transfer_tx_exact(64, walletAddressA, '0.001', '30');
+    const transfer_raw_tx_1559 = create_transfer_tx_1559(walletAddressA, '0.001', '50', '10');
     const rawTx = transfer_raw_tx_1559;
 
     console.log('\n getBlockNumber===========');
@@ -103,7 +107,7 @@ const test = async _ => {
     await createAccount();
 
     console.log('\ngetBalance===========');
-    await getBalance("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
+    await getBalance(walletAddress);
 
     console.log('\n getGasPrice===========');
     await getGasPrice()
@@ -115,11 +119,11 @@ const test = async _ => {
     await getEstimatedTxFee(rawTx)
 
     console.log('\n getAcountNonce===========');
-    nonceObj = await getAcountNonce("0xfeda2DCb016567DEb02C3b59724cf09Dbc41A64D");
+    nonceObj = await getAcountNonce(walletAddress);
     console.log(nonceObj);
 
     console.log('\n signTransaction===========');
-    let signedTx = await signTransaction(rawTx, private_key);
+    let signedTx = await signTransaction(rawTx, walletPrivateKey);
 
     console.log('\n sendSignedTransaction===========');
     let receipt = await sendSignedTransaction(signedTx);
