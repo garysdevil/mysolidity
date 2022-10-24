@@ -4,11 +4,10 @@ import ini from 'ini';
 import * as zksync from 'zksync';
 
 import * as utils_ethers from './utils_ethers.js';
-import * as zksync_v1 from './zksync_v1.js';
+import * as zksync_v1 from './zksync/zksync_v1.js';
 
 const config = ini.parse(fs.readFileSync("./conf/.local.config.ini", 'utf-8'));
-const ethereum_url = config.testnet_goerli.ethereum_rpc_url;
-// const ethereum_url = config.testnet_goerli.ethereum_ws_url;
+const ethereum_url = config.fullnode.ethereum_rpc_url;
 
 const wallet_private_key = config.wallet_private_key;
 const wallet_address = config.wallet_address;
@@ -36,24 +35,11 @@ const test_ethers = async _ => {
     return wallet_json_str;
 }
 
-
-
 (async _ => {
-    // console.log(ethereum_url);
-    // console.log(await ethersProvider.ready);
-    // console.log(await ethersProvider.getBlockNumber());
-    // console.log("连接正常");
-
-    // const data = fs.readFileSync('./local_wallet.json', 'utf8');
-    // const data_arr_obj = JSON.parse(data);
-    // console.log("address",data_arr_obj[0].address)
-    // console.log("private_key",data_arr_obj[0].private_key)
-
-    // zksync_v1.init(ethereum_url, 'mainnet', wallet_private_key);
-
-    utils_ethers.generateEthWalletFor(50, 'local_company.json');
-
-    
-
+    while (true) {
+        console.log(await ethersProvider.getBlockNumber());
+        await utils_ethers.getGasPrice(ethersProvider);
+        await zksync.utils.sleep(10);
+    }
 })()
 

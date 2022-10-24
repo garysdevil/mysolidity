@@ -1,27 +1,6 @@
 import * as ethers from 'ethers';
-import fs from 'fs';
 
-const generateEthWallet = _ => {
-    // 生成钱包 方式一
-    // let privateKey = ethers.utils.randomBytes(32) // 生成32个随机字节
-    // // console.log(Buffer.from(privateKey).toString('hex')) // 转成16进制字符串
-    // let wallet = new ethers.Wallet(privateKey)
-
-    // 生成钱包 方式二
-    let wallet = ethers.Wallet.createRandom();
-
-    // 返回钱包地址和私钥
-    let address = wallet.address;
-    let private_key = wallet.privateKey;
-    let mnemonic = wallet.mnemonic;
-    // let mnemonic = wallet.mnemonic.phrase
-    let json = JSON.stringify({ address, private_key, mnemonic });
-    console.log(wallet);
-    // console.log(json);
-    return json;
-}
-
-const connectEthWallet = (privateKey, provider) => {
+const connectWallet = (privateKey, provider) => {
     // 方式一 通过助记词
     // const MNEMONIC = "";
     // const wallet = ethers.Wallet.fromMnemonic(MNEMONIC).connect(provider);
@@ -33,17 +12,16 @@ const connectEthWallet = (privateKey, provider) => {
     return wallet;
 }
 
+// const tx_raw = {
+//     to: toAddress,
+//     value: ethers.utils.parseEther('0.01')
+// };
 // const wallet = new ethers.Wallet(privateKey).connect(provider);
-// transferETH("", "0.1", wallet);
-const transferETH = async (toAddress, valueEther, wallet, wait_flag = true) => {
-    const tx_raw = {
-        to: toAddress,
-        value: ethers.utils.parseEther(valueEther)
-    };
-
+// sendTx("地址", tx_raw, wallet);
+const sendTx = async ( tx_raw, wallet, wait_flag = true) => {
     const txReceipt_1 = await wallet.sendTransaction(tx_raw);
     const txHash = txReceipt_1.hash;
-    console.log("transferETH_Hash", txHash);
+    console.log("txHash=", txHash);
 
     // 如果不等待交易被打包，则直接返回交易的哈希
     if (wait_flag == false) {
@@ -62,6 +40,16 @@ const transferETH = async (toAddress, valueEther, wallet, wait_flag = true) => {
 
     return JSON.stringify({ gasUsed, effectiveGasPrice_Gwei, tx_fee_eth });
 }
+
+const sendSimpleTransferTx = async (toAddress, value_ether, wallet, wait_flag = true) => {
+    const tx_raw = {
+        to: toAddress,
+        value: ethers.utils.parseEther(value_ether)
+    };
+    const jsonResult = await sendTx(tx_raw, wallet, wait_flag);
+    return jsonResult;
+}
+
 
 const getBalance = async (walletAddress, ethersProvider) => {
     const balance_bignum = await ethersProvider.getBalance(walletAddress);
@@ -105,20 +93,6 @@ const getGasPrice = async (provider) => {
 //   });
 
 
-const generateEthWalletFor =  (num, path) => {
-    fs.writeFileSync(path, '[\n');
-    for (let i = 0; i < num; i++) {
-        let wallet_json_str = generateEthWallet();
-        // console.log(wallet_json_str);
-        fs.appendFileSync(path, wallet_json_str);
-        if ( i < num - 1 ){
-            fs.appendFileSync(path, ',\n');
-        }
-    }
-    fs.appendFileSync(path, '\n]');
-}
 
-
-export { generateEthWallet, connectEthWallet, transferETH, getBalance, getGasPrice };
-
-export { generateEthWalletFor };
+export { sendTx, sendSimpleTransferTx };
+export { connectWallet, getBalance, getGasPrice };

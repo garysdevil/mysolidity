@@ -2,11 +2,11 @@ import * as ethers from 'ethers';
 import fs, { unwatchFile } from 'fs';
 import ini from 'ini';
 
-import * as utils_ethers from './utils_ethers.js';
-import * as zksync_v1 from './zksync_v1.js';
+import * as ethers_online from './ethers/ethers_online';
+import * as zksync_v1 from './zksync/zksync_v1.js';
 
 const config = ini.parse(fs.readFileSync("./conf/.local.config.ini", 'utf-8'));
-const ethereum_url = config.testnet_goerli.ethereum_rpc_url;
+const ethereum_url = config.fullnode.ethereum_rpc_url;
 
 const wallet_private_key = config.wallet_private_key;
 
@@ -40,18 +40,18 @@ const test_zksync_2 = async _ => {
 
 const test_ethers = async _ => {
     // 生成钱包
-    let wallet_json_str = utils_ethers.generateEthWallet();
+    let wallet_json_str = ethers_online.generateEthWallet();
     console.log(wallet_json_str);
     const new_wallet_address = JSON.parse(wallet_json_str).address;
     // new_wallet_private_key = JSON.parse(wallet_json_str).private_key;
 
     // 转账
     const ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
-    let txFeeETH = await utils_ethers.transferETH(new_wallet_address, "0.01", ethWallet);
+    let txFeeETH = await ethers_online.transferETH(new_wallet_address, "0.01", ethWallet);
     console.log(txFeeETH);
 
     // 查看余额
-    await utils_ethers.getBalance(new_wallet_address, ethersProvider);
+    await ethers_online.getBalance(new_wallet_address, ethersProvider);
 
     return wallet_json_str;
 }

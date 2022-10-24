@@ -1,6 +1,8 @@
 import * as zksync from 'zksync';
 import * as ethers from 'ethers';
 
+// 调用此脚本内的函数前，需要先执行初始化操作 init()
+
 var ethWallet;
 var syncWallet;
 
