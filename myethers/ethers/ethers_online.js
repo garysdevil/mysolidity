@@ -12,19 +12,18 @@ const connectWallet = (privateKey, provider) => {
     return wallet;
 }
 
-// const tx_raw = {
+// const txRaw = {
 //     to: toAddress,
 //     value: ethers.utils.parseEther('0.01')
 // };
 // const wallet = new ethers.Wallet(privateKey).connect(provider);
-// sendTx("地址", tx_raw, wallet);
-const sendTx = async ( tx_raw, wallet, wait_flag = true) => {
-    const txReceipt_1 = await wallet.sendTransaction(tx_raw);
+// sendTx("地址", txRaw, wallet);
+const sendTx = async ( txRaw, wallet, waitFlag = true) => {
+    const txReceipt_1 = await wallet.sendTransaction(txRaw);
     const txHash = txReceipt_1.hash;
     console.log("txHash=", txHash);
-
     // 如果不等待交易被打包，则直接返回交易的哈希
-    if (wait_flag == false) {
+    if (waitFlag == false) {
         return JSON.stringify({ txHash });
     }
 
@@ -32,21 +31,22 @@ const sendTx = async ( tx_raw, wallet, wait_flag = true) => {
     let txReceipt_2 = await txReceipt_1.wait();
     // console.log(txReceipt_2);
 
+    const blockNumber = txReceipt_2.blockNumber;
     const gasUsed = ethers.utils.formatUnits(txReceipt_2.gasUsed, 'wei');
     const effectiveGasPrice_Gwei = ethers.utils.formatUnits(txReceipt_2.effectiveGasPrice, 'gwei');
 
     const tx_fee = txReceipt_2.gasUsed.mul(txReceipt_2.effectiveGasPrice);
     const tx_fee_eth = ethers.utils.formatUnits(tx_fee, 'ether');
 
-    return JSON.stringify({ gasUsed, effectiveGasPrice_Gwei, tx_fee_eth });
+    return JSON.stringify({ blockNumber, gasUsed, effectiveGasPrice_Gwei, tx_fee_eth });
 }
 
-const sendSimpleTransferTx = async (toAddress, value_ether, wallet, wait_flag = true) => {
-    const tx_raw = {
+const sendSimpleTransferTx = async (toAddress, valueEther, wallet, waitFlag = true) => {
+    const txRaw = {
         to: toAddress,
-        value: ethers.utils.parseEther(value_ether)
+        value: ethers.utils.parseEther(valueEther)
     };
-    const jsonResult = await sendTx(tx_raw, wallet, wait_flag);
+    const jsonResult = await sendTx(txRaw, wallet, waitFlag);
     return jsonResult;
 }
 
@@ -74,9 +74,9 @@ const getGasPrice = async (provider) => {
     const gasPrice = ethers.utils.formatUnits(feeData.gasPrice, "gwei");
     // const gasPrice = ethers.utils.formatUnits(await provider.getGasPrice(), "gwei");
 
-    console.log("gasPrice= " + gasPrice +  "Gwei");
-    console.log("maxFeePerGas_recommend= " + maxFeePerGas + " Gwei")
-    console.log("maxPriorityFeePerGas_recommend= " + maxPriorityFeePerGas + " Gwei");
+    // console.log("gasPrice= " + gasPrice +  "Gwei");
+    // console.log("maxFeePerGas_recommend= " + maxFeePerGas + " Gwei")
+    // console.log("maxPriorityFeePerGas_recommend= " + maxPriorityFeePerGas + " Gwei");
 
     return JSON.stringify({ gasPrice, maxFeePerGas, maxPriorityFeePerGas });
 }

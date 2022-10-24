@@ -1,14 +1,13 @@
 import * as ethers from 'ethers';
-import fs, { unwatchFile } from 'fs';
+import fs from 'fs';
 import ini from 'ini';
 import * as zksync from 'zksync';
 
-import * as ethers_online from './ethers/ethers_online';
+import * as ethers_online from './ethers/ethers_online.js';
 import * as zksync_v1 from './zksync/zksync_v1.js';
 
 const config = ini.parse(fs.readFileSync("./conf/.local.config.ini", 'utf-8'));
 const ethereum_url = config.fullnode.ethereum_rpc_url;
-// const ethereum_url = config.fullnode.ethereum_ws_url;
 
 const wallet_private_key = config.wallet_private_key;
 const wallet_address = config.wallet_address;
@@ -18,34 +17,50 @@ const wallet_address_a = config.wallet_address_a;
 const ethersProvider = new ethers.providers.JsonRpcProvider(ethereum_url);
 
 
-const test_ethers = async _ => {
-    // 转账
-    const ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
-    let txFeeETH = await ethers_online.transferETH(new_wallet_address, "0.01", ethWallet);
-    console.log(txFeeETH);
-
-    // 查看余额
-    await ethers_online.getBalance(new_wallet_address, ethersProvider);
-
-    return wallet_json_str;
+// 定制化交易费
+// 轮训等待baseFee降低
+const myTransfer = async (to_address, ethWallet) => {
+    const value_ether = '0.01';
+    const maxFeePerGas = ethers.utils.parseUnits('78', "gwei");
+    const maxPriorityFeePerGas = ethers.utils.parseUnits('0.1', "gwei");
+    
+    // 签名发送交易 // 发送交易前先评估费用，否则可能会由于设置的gasPrice过低，导致交易失败
+    const rawTx = {
+        maxPriorityFeePerGas,
+        maxFeePerGas,
+        to: to_address,
+        value: ethers.utils.parseEther(value_ether)
+    };
+    let sendFlag = false;
+    while (!sendFlag){
+        const jsonStr = await ethers_online.getGasPrice(ethersProvider);
+        let currentGasPrice = JSON.parse(jsonStr).gasPrice;
+        currentGasPrice = ethers.utils.parseUnits(currentGasPrice, "gwei");
+    
+        if (maxFeePerGas.gt(currentGasPrice)){
+            let jsonResult = await ethers_online.sendTx(rawTx, ethWallet);
+            sendFlag = true;
+            console.log(jsonResult);
+        }else{
+            console.log("gasPrice大于设定的值,等待10秒后重试 currentGasPrice= ", ethers.utils.formatUnits(currentGasPrice, 'gwei'), "Gwei\n");
+            await zksync.utils.sleep(10000);
+        }
+    }
+    await ethers_online.getBalance(to_address, ethersProvider);
+    
 }
 
 
 
 (async _ => {
-    // console.log(ethereum_url);
-    // console.log(await ethersProvider.ready);
-    // console.log(await ethersProvider.getBlockNumber());
-    // console.log("连接正常");
+    console.log(ethereum_url);
+    console.log(await ethersProvider.ready);
+    console.log(await ethersProvider.getBlockNumber());
+    console.log("连接正常");
 
-    // const data = fs.readFileSync('./local_wallet.json', 'utf8');
-    // const data_arr_obj = JSON.parse(data);
-    // console.log("address",data_arr_obj[0].address)
-    // console.log("private_key",data_arr_obj[0].private_key)
+    const ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
 
-    // zksync_v1.init(ethereum_url, 'mainnet', wallet_private_key);
-
-    ethers_online.generateEthWalletFor(50, 'local_company.json');
+    await myTransfer(wallet_address_a, ethWallet);
 
 })()
 
