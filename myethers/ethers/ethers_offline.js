@@ -22,6 +22,7 @@ const generateEthWallet = _ => {
     return json;
 }
 
+
 // 批量生成钱包，写入指定的文件内
 const generateEthWalletFor =  (num, path) => {
     fs.writeFileSync(path, '[\n');
@@ -35,5 +36,12 @@ const generateEthWalletFor =  (num, path) => {
     }
     fs.appendFileSync(path, '\n]');
 }
+// 读取的文件的方式
+// const data = fs.readFileSync(path, 'utf8');
+// const data_arr_obj = JSON.parse(data);
+// console.log("address",data_arr_obj[0].address)
+// console.log("private_key",data_arr_obj[0].private_key)
+
+
 
 export { generateEthWallet, generateEthWalletFor };
