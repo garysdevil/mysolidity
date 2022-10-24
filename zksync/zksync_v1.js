@@ -15,11 +15,14 @@ const init = async (ethereum_url, zksync_netowrk, wallet_private_key) => {
 
     ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
     syncWallet = await zksync.Wallet.fromEthSigner(ethWallet, syncProvider);
+
+    console.log("zksync初始化操作 syncWallet account ID 为 ", await syncWallet.getAccountId());
 }
 
 // 充值进zkSync 二层网络
 // 输入 以太坊代币 '0,1'
 const depositToSyncFromEthereum = async (value_ETH, wait_flag = false) => {
+    // 充值进zksync网络，需要消耗 62618 gas费。  消耗的以太坊=62618*value_Gwei*0.000000001
     const deposit = await syncWallet.depositToSyncFromEthereum({
         depositTo: syncWallet.address(),
         token: 'ETH',
