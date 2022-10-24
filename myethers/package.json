@@ -3,6 +3,7 @@
     "dependencies": {
         "babel-core": "^6.26.3",
         "babel-preset-env": "^1.7.0",
+        "content-hash": "^2.5.2",
         "ethers": "^5.7.2",
         "ini": "^3.0.1",
         "zksync": "^0.13.1"

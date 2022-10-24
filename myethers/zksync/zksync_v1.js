@@ -120,4 +120,17 @@ const getBalance = async _ => {
     console.log(value);
 }
 
-export { init, depositToSyncFromEthereum, withdrawFromSyncToEthereum, activeAccount, transferETH, getBalance };
+// const contentHash = 'QmYxT4LnK8sqLupjbS6eRvu1si7Ly2wFQAqFebxhWntcf6';
+const mintNFT = async (contentHash) => {
+    console.log(syncWallet.address());
+    const nft = await syncWallet.mintNFT({
+      recipient: syncWallet.address(),
+      contentHash
+    });
+    console.log(nft);
+    // return nft.txHash;
+}
+
+
+
+export { init, depositToSyncFromEthereum, withdrawFromSyncToEthereum, activeAccount, transferETH, getBalance, mintNFT };
