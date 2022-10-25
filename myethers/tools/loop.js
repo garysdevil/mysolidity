@@ -15,10 +15,11 @@ const gasPriceLoop = async _ => {
     // 轮训gasPrice
     while (true) {
         console.log(await ethersProvider.getBlockNumber());
-        await utils_ethers.getGasPrice(ethersProvider);
+        const jsonResult = await utils_ethers.getGasPrice(ethersProvider);
+        // console.log(JSON.parse(jsonResult).gasPrice);
+        console.log(JSON.parse(jsonResult));
         // 等待10秒
         await zksync.utils.sleep(10000);
-        console.log();
     }
 }
 

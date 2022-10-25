@@ -18,23 +18,27 @@ const init = async (ethereum_url, zksync_netowrk, wallet_private_key) => {
     ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
     syncWallet = await zksync.Wallet.fromEthSigner(ethWallet, syncProvider);
 
-    console.log("zksync初始化操作 syncWallet account ID 为 ", await syncWallet.getAccountId());
+    console.log("zksync初始化操作, accountId=", await syncWallet.getAccountId(), 'actived=', await syncWallet.isSigningKeySet());
+    return syncWallet;
 }
 
 // 充值进zkSync 二层网络
-// 输入 以太坊代币 '0,1'
-const depositToSyncFromEthereum = async (value_ETH, wait_flag = false) => {
+// const value_ETH = '0.1'
+// const ethTxOptions = {gasPrice: ethers.utils.parseUnits(1, "gwei"), nonce: 0} // 可以输入 gasPrice，不可以输入 maxPriorityFeePerGas
+const depositToSyncFromEthereum = async (value_ETH, ethTxOptions = null, wait_flag = false) => {
     // 充值进zksync网络，需要消耗 62618 gas费。  消耗的以太坊=62618*value_Gwei*0.000000001
     const deposit = await syncWallet.depositToSyncFromEthereum({
         depositTo: syncWallet.address(),
         token: 'ETH',
-        amount: ethers.utils.parseEther(value_ETH)
+        amount: ethers.utils.parseEther(value_ETH),
+        ethTxOptions
     });
-    const ethTxHash = deposit.ethTx.hash;
-
     // 默认不等待最终的确认
     if (wait_flag == false) {
-        return ethTxHash;
+        console.log('ethTxHash=', deposit.ethTx.hash);
+        return deposit.ethTx;
+    }else{
+        console.log('ethTx=', deposit.ethTx);
     }
     // 需要等很久
     // Await confirmation from the zkSync operator
@@ -71,7 +75,7 @@ const activeAccount = async _ => {
     // To control assets in zkSync network, an account must register a separate public key once.
     if (!(await syncWallet.isSigningKeySet())) {
         if ((await syncWallet.getAccountId()) == undefined) {
-            throw new Error('AA Unknown account');
+            throw new Error('Fun activeAccount: Unknown account');
         }
         // As any other kind of transaction, `ChangePubKey` transaction requires fee.
         // User doesn't have (but can) to specify the fee amount. If omitted, library will query zkSync node for
@@ -83,10 +87,10 @@ const activeAccount = async _ => {
 
         // Wait until the tx is committed
         const recetp = await changePubkey.awaitReceipt();
-        console.log("激活成功");
+        console.log("账户激活成功", syncWallet.address());
         return recetp;
     } else {
-        console.log("此账户已经被激活过了");
+        console.log("此账户已经被激活过了", syncWallet.address());
     }
 }
 
@@ -120,15 +124,22 @@ const getBalance = async _ => {
     console.log(value);
 }
 
-// const contentHash = 'QmYxT4LnK8sqLupjbS6eRvu1si7Ly2wFQAqFebxhWntcf6';
-const mintNFT = async (contentHash) => {
-    console.log(syncWallet.address());
+// const contentHash = '0x2dc9c5fabf876944e15bf2d2489d4d3dbc1f691319da0b85a24c3f3e28f3b13b';
+const mintNFT = async (contentHash, waitFlag = false) => {
     const nft = await syncWallet.mintNFT({
       recipient: syncWallet.address(),
-      contentHash
+      contentHash,
+      feeToken: 'ETH'
     });
-    console.log(nft);
-    // return nft.txHash;
+    
+    console.log(nft.txHash);
+
+    if (waitFlag == true){
+        const receipt = await nft.awaitReceipt();
+        console.log(receipt)
+    }
+    const txHash = nft.txHash;
+    return JSON.stringify({txHash});
 }
 
 

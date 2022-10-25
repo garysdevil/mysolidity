@@ -55,11 +55,12 @@ const myTransfer = async (ethWallet, to_address, value_ether, maxFeePerGas_gwei,
     console.log(await ethersProvider.getBlockNumber());
     console.log("连接正常");
 
-    const ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
-    const data = fs.readFileSync('./wallet.json', 'utf8');
-    const data_arr_obj = JSON.parse(data);
+    // 批量创建钱包
+    // const ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
+    // const data = fs.readFileSync('./wallet.json', 'utf8');
+    // const data_arr_obj = JSON.parse(data);
 
-
+    // 批量发送交易
     // const value_ether = '1';
     // const maxFeePerGas_gwei = '12';
     // const maxPriorityFeePerGas_gwei = '0.1';

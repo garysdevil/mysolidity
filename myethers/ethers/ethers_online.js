@@ -51,11 +51,15 @@ const sendSimpleTransferTx = async (toAddress, valueEther, wallet, waitFlag = tr
 }
 
 
-const getBalance = async (walletAddress, ethersProvider) => {
-    const balance_bignum = await ethersProvider.getBalance(walletAddress);
-    let balance_ether = await ethers.utils.formatEther(balance_bignum);
-    console.log(walletAddress, "=", balance_ether, "ETH");
-    return ethers.utils.formatUnits(balance_bignum, 'wei');
+// const address = '0x111';
+// const ethersProvider = new ethers.providers.JsonRpcProvider(ethereum_url);
+const getBalance = async (address, ethersProvider) => {
+    const balance_bignum = await ethersProvider.getBalance(address);
+    const balance = await ethers.utils.formatEther(balance_bignum);
+    const unit = 'ether';
+    // console.log(address, "=", balance_ether, "ETH");
+    // return ethers.utils.formatUnits(balance_bignum, 'wei');
+    return JSON.stringify({balance, unit, address});
 }
 
 // const provider = new ethers.providers.JsonRpcProvider(ethereum_url);

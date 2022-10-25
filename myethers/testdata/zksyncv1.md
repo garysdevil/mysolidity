@@ -31,6 +31,9 @@ mint_fee_eth = 0.0000558
 fee_usdt = transfer_fee_eth * 1300
 print("zksync网络内转账，消耗的交易费ETH=", mint_fee_eth, ", USDT=", fee_usdt) # zksync网络内转账，消耗的交易费ETH= 5.58e-05 , USDT= 0.018629
 
-# 评估zksync网络内总消耗交易费 0.001576376
+ethereum_transfer_fee_eth + deposite_fee_eth
+active_fee_eth + transfer_fee_eth + mint_fee_eth
+# 评估以太坊网络总交易费 0.001421506
+# 评估zksync网络总交易费 0.00051213
 # 评估总消耗交易费 0.001933376
 ```
