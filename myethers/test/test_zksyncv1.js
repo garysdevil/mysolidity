@@ -2,13 +2,14 @@ import * as ethers from 'ethers';
 import fs, { unwatchFile } from 'fs';
 import ini from 'ini';
 
-import * as ethers_online from './ethers/ethers_online';
-import * as zksync_v1 from './zksync/zksync_v1.js';
+import * as ethers_online from '../ethers/ethers_online';
+import * as zksync_v1 from '../zksync/zksync_v1.js';
 
-const config = ini.parse(fs.readFileSync("./conf/.local.config.ini", 'utf-8'));
+const config = ini.parse(fs.readFileSync("../conf/.local.config.ini", 'utf-8'));
 const ethereum_url = config.fullnode.ethereum_rpc_url;
 
 const wallet_private_key = config.wallet_private_key;
+const wallet_address = config.wallet_address;
 
 const wallet_address_a = config.wallet_address_a;
 
@@ -31,7 +32,7 @@ const test_zksync_2 = async _ => {
     console.log("3 transferReceipt", transferReceipt);
 
     // 取
-    let txHash = await zksync_v1.withdrawFromSyncToEthereum('0.001');
+    let txHash = await zksync_v1.withdrawFromSyncToEthereum('0.001', wallet_address);
     console.log("4 txHash", txHash);
 
     // 获取余额

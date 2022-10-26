@@ -3,7 +3,6 @@ import * as ethers from 'ethers';
 
 // 调用此脚本内的函数前，需要先执行初始化操作 init()
 
-var ethWallet;
 var syncWallet;
 
 // zksync_netowrk = georli 或 mainnet
@@ -15,7 +14,7 @@ const init = async (ethereum_url, zksync_netowrk, wallet_private_key) => {
     // 和zkSync网络交互
     const syncProvider = await zksync.getDefaultProvider(zksync_netowrk);
 
-    ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
+    const ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
     syncWallet = await zksync.Wallet.fromEthSigner(ethWallet, syncProvider);
 
     console.log("zksync初始化操作, accountId=", await syncWallet.getAccountId(), 'actived=', await syncWallet.isSigningKeySet());
@@ -37,7 +36,7 @@ const depositToSyncFromEthereum = async (value_ETH, ethTxOptions = null, wait_fl
     if (wait_flag == false) {
         console.log('ethTxHash=', deposit.ethTx.hash);
         return deposit.ethTx;
-    }else{
+    } else {
         console.log('ethTx=', deposit.ethTx);
     }
     // 需要等很久
@@ -54,9 +53,9 @@ const depositToSyncFromEthereum = async (value_ETH, ethTxOptions = null, wait_fl
 }
 
 // 取回代币进Ethereum网络
-const withdrawFromSyncToEthereum = async (value_ETH) => {
+const withdrawFromSyncToEthereum = async (value_ETH, to_address) => {
     const withdraw = await syncWallet.withdrawFromSyncToEthereum({
-        ethAddress: ethWallet.address,
+        ethAddress: to_address,
         token: 'ETH',
         amount: ethers.utils.parseEther(value_ETH)
     });
@@ -127,19 +126,19 @@ const getBalance = async _ => {
 // const contentHash = '0x2dc9c5fabf876944e15bf2d2489d4d3dbc1f691319da0b85a24c3f3e28f3b13b';
 const mintNFT = async (contentHash, waitFlag = false) => {
     const nft = await syncWallet.mintNFT({
-      recipient: syncWallet.address(),
-      contentHash,
-      feeToken: 'ETH'
+        recipient: syncWallet.address(),
+        contentHash,
+        feeToken: 'ETH'
     });
-    
-    console.log(nft.txHash);
 
-    if (waitFlag == true){
+    console.log("mintNFT txHash=", nft.txHash);
+
+    if (waitFlag == true) {
         const receipt = await nft.awaitReceipt();
         console.log(receipt)
     }
     const txHash = nft.txHash;
-    return JSON.stringify({txHash});
+    return JSON.stringify({ txHash });
 }
 
 
