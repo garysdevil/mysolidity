@@ -107,8 +107,8 @@ const transferETH = async (to_address, value_ETH) => {
     return transferReceipt;
 }
 
+// 查余额，函数返回值的单位为ETH
 const getBalance = async _ => {
-    // 查余额
     const committedEthBalance = await syncWallet.getBalance('ETH', "committed");
     const balance_wei_Hex = committedEthBalance._hex;
 
@@ -119,8 +119,8 @@ const getBalance = async _ => {
     // const verifiedETHBalance = await syncWallet.getBalance('ETH', 'verified');
     // const balance_wei_Hex = verifiedETHBalance._hex;
 
-    const value = ethers.utils.formatEther(balance_wei_Hex);
-    console.log(value);
+    const balance = ethers.utils.formatEther(balance_wei_Hex);
+    return JSON.stringify({ balance });
 }
 
 // const contentHash = '0x2dc9c5fabf876944e15bf2d2489d4d3dbc1f691319da0b85a24c3f3e28f3b13b';
