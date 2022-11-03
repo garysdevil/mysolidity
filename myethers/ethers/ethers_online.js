@@ -1,4 +1,6 @@
 import * as ethers from 'ethers';
+import { isTransactionAmountPackable } from 'zksync/build/utils.js';
+import * as utils from '../utils/utils.js';
 
 const initWallet = (privateKey, provider) => {
     // 方式一 通过助记词
@@ -27,8 +29,8 @@ const getProviderStatus = async (provider) => {
 //     value: ethers.utils.parseEther('0.01')
 // };
 // const wallet = new ethers.Wallet(privateKey).connect(provider);
-// sendTx("地址", txRaw, wallet);
-const sendTx = async (txRaw, wallet, waitFlag = true) => {
+// sendTx(wallet, "地址", txRaw);
+const sendTx = async (wallet, txRaw, waitFlag = true) => {
     const txReceipt_1 = await wallet.sendTransaction(txRaw);
     const txHash = txReceipt_1.hash;
     console.log("txHash=", txHash);
@@ -50,16 +52,6 @@ const sendTx = async (txRaw, wallet, waitFlag = true) => {
 
     return JSON.stringify({ blockNumber, gasUsed, effectiveGasPrice_Gwei, tx_fee_eth });
 }
-
-const sendSimpleTransferTx = async (toAddress, valueEther, wallet, waitFlag = true) => {
-    const txRaw = {
-        to: toAddress,
-        value: ethers.utils.parseEther(valueEther)
-    };
-    const jsonResult = await sendTx(txRaw, wallet, waitFlag);
-    return jsonResult;
-}
-
 
 // const address = '0x111';
 // const ethersProvider = new ethers.providers.JsonRpcProvider(ethereum_url);
@@ -107,6 +99,49 @@ const getGasPrice = async (provider) => {
 //   });
 
 
+const transferSimple = async (wallet, toAddress, valueEther, waitFlag = true) => {
+    const txRaw = {
+        to: toAddress,
+        value: ethers.utils.parseEther(valueEther)
+    };
+    const jsonResult = await sendTx(wallet, txRaw, waitFlag);
+    return jsonResult;
+}
 
-export { sendTx, sendSimpleTransferTx };
+
+// 定制化交易手续费，轮训等待baseFee降低，默认间隔10秒
+const transferExact = async (wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '0.1', intervalTime = 10000) => {
+    const value = ethers.utils.parseEther(value_ether);
+    const maxFeePerGas = ethers.utils.parseUnits(maxFeePerGas_gwei, "gwei");
+    const maxPriorityFeePerGas = ethers.utils.parseUnits(maxPriorityFeePerGas_gwei, "gwei");
+
+    // 签名发送交易 // 发送交易前先评估费用，否则可能会由于设置的gasPrice过低，导致交易失败
+    const rawTx = {
+        maxPriorityFeePerGas,
+        maxFeePerGas,
+        to: to_address,
+        value
+    };
+    while (true) {
+        const jsonStr = await getGasPrice(wallet.provider);
+        let currentBlockGasPrice = JSON.parse(jsonStr).gasPrice;
+        currentBlockGasPrice = ethers.utils.parseUnits(currentBlockGasPrice, "gwei");
+        console.log("currentBlockGasPrice= ", ethers.utils.formatUnits(currentBlockGasPrice, 'gwei'), "Gwei");
+
+        if (maxFeePerGas.gt(currentBlockGasPrice)) {
+            try{
+                let jsonResult = await sendTx(wallet, rawTx, waitFlag);
+                return jsonResult;
+            }catch(e){
+                console.log("gasPrice突然大于设定的值,等待" + intervalTime / 1000 + "秒后重试。\n", e);
+                await utils.delay(intervalTime);
+            }
+        } else {
+            console.log("gasPrice大于设定的值,等待" + intervalTime / 1000 + "秒后重试。\n");
+            await utils.delay(intervalTime);
+        }
+    }
+}
+
+export { sendTx, transferSimple, transferExact };
 export { initWallet, getBalance, getGasPrice, getProviderStatus };

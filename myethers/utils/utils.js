@@ -16,8 +16,12 @@ const random = async _ => {
     Math.floor(Math.random()*100+1) // 取1到100的随机数
 }
 
+// 示范 await delay(1000); // 等待1秒
+const delay = (time) => {
+    return new Promise(resolve => setTimeout(resolve, time));
+} 
 
-export { getZksyncContentHashByCid };
+export { getZksyncContentHashByCid, delay };
 
 
 const test = async _ => {
