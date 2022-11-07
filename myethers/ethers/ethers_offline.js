@@ -45,3 +45,9 @@ const generateEthWalletFor =  (num, path) => {
 
 
 export { generateEthWallet, generateEthWalletFor };
+
+
+// BigNumber 转为
+// toHexString() → String // Returns the value of BigNumber as a base-16, 0x-prefixed DataHexString.
+// toNumber() → num // Returns the value of BigNumber as a JavaScript value.
+// toString() → String // Returns the value of BigNumber as a base-10 string.
