@@ -29,21 +29,18 @@ const test_transferExact_all = async () =>{
     // 重新设置最大的maxFeePerGas_gwei
     // const fee_gwei = 21000 * maxFeePerGas_gwei;
     let fee_gwei;
-    while (true){
-        result = await ethers_online.getGasPrice(ethersProvider);
-        console.log("当前区块的gas价格", result);
-        const currentGasPrice = parseFloat(JSON.parse(result).gasPrice);
-        if (currentGasPrice + 1 < maxFeePerGas_gwei){
-            fee_gwei = 21000 * (currentGasPrice + 1);
-            maxFeePerGas_gwei = (currentGasPrice + 1);
-            break;
-        }else if (currentGasPrice < maxFeePerGas_gwei){
-            fee_gwei = 21000 * maxFeePerGas_gwei;
-            maxFeePerGas_gwei = maxFeePerGas_gwei;
-            break;
-        }
-        await utils.delay(10000);
+
+    const jsonStr = ethers_online.whileGasPrice(ethersProvider, maxFeePerGas_gwei);
+    const currentGasPrice = parseFloat(Json.parse(jsonStr).currentGasPrice);
+
+    if (currentGasPrice + 1 < maxFeePerGas_gwei){
+        fee_gwei = 21000 * (currentGasPrice + 1);
+        maxFeePerGas_gwei = (currentGasPrice + 1);
+    }else if (currentGasPrice < maxFeePerGas_gwei){
+        fee_gwei = 21000 * maxFeePerGas_gwei;
+        maxFeePerGas_gwei = maxFeePerGas_gwei;
     }
+
     maxFeePerGas_gwei = maxFeePerGas_gwei.toString();
     // 设置全部转出的余额
     const fee_ether_obj = ethers.utils.parseUnits(fee_gwei.toString(), "gwei");

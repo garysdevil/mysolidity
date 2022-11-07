@@ -69,7 +69,7 @@ const getGasPrice = async (provider) => {
 
     // Returns the current recommended FeeData to use in a transaction.
     const feeData = await provider.getFeeData()
-    // {
+    // feeData = {
     //   gasPrice: { BigNumber: "21971214174" },
     //   lastBaseFeePerGas: { BigNumber: "21761034090" },
     //   maxFeePerGas: { BigNumber: "45022068180" },
@@ -113,7 +113,7 @@ const transferSimple = async (wallet, toAddress, valueEther, waitFlag = true) =>
 
 
 // 定制化交易手续费，轮训等待baseFee降低，默认间隔10秒
-const transferExact = async (wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '0.1', intervalTime = 10000) => {
+const transferExact = async (wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '1', intervalTime = 10000) => {
     const value = ethers.utils.parseEther(value_ether);
     const maxFeePerGas = ethers.utils.parseUnits(maxFeePerGas_gwei, "gwei");
     const maxPriorityFeePerGas = ethers.utils.parseUnits(maxPriorityFeePerGas_gwei, "gwei");
@@ -125,26 +125,50 @@ const transferExact = async (wallet, to_address, value_ether, waitFlag = true, m
         to: to_address,
         value
     };
-    while (true) {
-        const jsonStr = await getGasPrice(wallet.provider);
-        let currentBlockGasPrice = JSON.parse(jsonStr).gasPrice;
-        currentBlockGasPrice = ethers.utils.parseUnits(currentBlockGasPrice, "gwei");
-        console.log("currentBlockGasPrice= ", ethers.utils.formatUnits(currentBlockGasPrice, 'gwei'), "Gwei");
+    const jsonStr = await whileGasPrice(wallet.provider, maxFeePerGas_gwei, intervalTime);
+    // JSON.parse(jsonStr).gasPrice
+    // parseFloat(targetGasPrice);
 
-        if (maxFeePerGas.gt(currentBlockGasPrice)) {
-            try{
-                let jsonResult = await sendTx(wallet, rawTx, waitFlag);
-                return jsonResult;
-            }catch(e){
-                console.log("gasPrice突然大于设定的值,等待" + intervalTime / 1000 + "秒后重试。\n", e);
-                await utils.delay(intervalTime);
-            }
-        } else {
-            console.log("gasPrice大于设定的值,等待" + intervalTime / 1000 + "秒后重试。\n");
-            await utils.delay(intervalTime);
+    try{
+        let jsonResult = await sendTx(wallet, rawTx, waitFlag);
+        return jsonResult;
+    }catch(e){
+        console.log("gasPrice突然大于设定的值,等待" + intervalTime / 1000 + "秒后重试。\n", e);
+        await transferExact(wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '1', intervalTime = 10000);
+    }
+}
+
+
+// 传入参数
+    // provider
+    // targetGasPrice 单位为gwei，数字类型
+    // intervalTime 默认5秒轮训一次
+// 传出参数 { currentBlockGasPrice } 字符串
+const whileGasPrice = async (provider, targetGasPrice, intervalTime = 5000) => {
+    targetGasPrice = parseFloat(targetGasPrice);
+    while (true) {
+        const jsonStr = await getGasPrice(provider);
+        const currentBlockGasPrice = parseFloat(JSON.parse(jsonStr).gasPrice);
+        // const currentBlockGasPrice_obj = ethers.utils.parseUnits(currentBlockGasPrice, "gwei");
+
+        console.log("currentBlockGasPrice = " + currentBlockGasPrice, "; targetGasPrice = ", targetGasPrice);
+
+        // console.log(typeof parseFloat(currentBlockGasPrice));
+        // console.log(typeof targetGasPrice);
+        if (targetGasPrice > currentBlockGasPrice){
+            return JSON.stringify({currentBlockGasPrice});
         }
+
+        await utils.delay(intervalTime);
     }
 }
 
 export { sendTx, transferSimple, transferExact };
-export { initWallet, getBalance, getGasPrice, getProviderStatus };
+export { initWallet, getBalance, getGasPrice, getProviderStatus, whileGasPrice };
+
+(async _ => {
+    // await testCoinContract();
+    // const ethersProvider = new ethers.providers.getDefaultProvider();
+    // await whileGasPrice(ethersProvider, 44);
+
+})()
