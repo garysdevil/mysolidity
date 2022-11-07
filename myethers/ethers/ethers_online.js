@@ -2,7 +2,7 @@ import * as ethers from 'ethers';
 import { isTransactionAmountPackable } from 'zksync/build/utils.js';
 import * as utils from '../utils/utils.js';
 
-const initWallet = (privateKey, provider) => {
+const initWallet = (provider, privateKey) => {
     // 方式一 通过助记词
     // const MNEMONIC = "";
     // const wallet = ethers.Wallet.fromMnemonic(MNEMONIC).connect(provider);
@@ -87,6 +87,9 @@ const getGasPrice = async (provider) => {
     return JSON.stringify({ gasPrice, maxFeePerGas, maxPriorityFeePerGas });
 }
 
+// const estimateGas = async (provider) => {
+
+// }
 // await provider.estimateGas({
 //     // Wrapped ETH address
 //     to: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
