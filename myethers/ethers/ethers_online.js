@@ -1,5 +1,5 @@
 import * as ethers from 'ethers';
-import { isTransactionAmountPackable } from 'zksync/build/utils.js';
+import { isTransactionAmountPackable, serializeForcedExit } from 'zksync/build/utils.js';
 import * as utils from '../utils/utils.js';
 
 const initWallet = (provider, privateKey) => {
@@ -55,7 +55,7 @@ const sendTx = async (wallet, txRaw, waitFlag = true) => {
 
 // const address = '0x111';
 // const ethersProvider = new ethers.providers.JsonRpcProvider(ethereum_url);
-const getBalance = async (address, ethersProvider) => {
+const getBalance = async (ethersProvider, address) => {
     const balance_bignum = await ethersProvider.getBalance(address);
     const balance = await ethers.utils.formatEther(balance_bignum);
     const unit = 'ether';
@@ -113,50 +113,48 @@ const transferSimple = async (wallet, toAddress, valueEther, waitFlag = true) =>
 
 
 // 定制化交易手续费，轮训等待baseFee降低，默认间隔10秒
-const transferExact = async (wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '1', intervalTime = 10000) => {
+const transferExact = async (wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '1') => {
     const value = ethers.utils.parseEther(value_ether);
     const maxFeePerGas = ethers.utils.parseUnits(maxFeePerGas_gwei, "gwei");
     const maxPriorityFeePerGas = ethers.utils.parseUnits(maxPriorityFeePerGas_gwei, "gwei");
 
-    // 签名发送交易 // 发送交易前先评估费用，否则可能会由于设置的gasPrice过低，导致交易失败
+    // 签名发送交易
     const rawTx = {
         maxPriorityFeePerGas,
         maxFeePerGas,
         to: to_address,
         value
     };
-    const jsonStr = await whileGasPrice(wallet.provider, maxFeePerGas_gwei, intervalTime);
-    // JSON.parse(jsonStr).gasPrice
-    // parseFloat(targetGasPrice);
 
-    try{
+    try {
         let jsonResult = await sendTx(wallet, rawTx, waitFlag);
         return jsonResult;
-    }catch(e){
-        console.log("gasPrice突然大于设定的值,等待" + intervalTime / 1000 + "秒后重试。\n", e);
-        await transferExact(wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '1', intervalTime = 10000);
+    } catch (e) {
+        const origin_addres = wallet.address;
+        console.log("转账失败", "; origin_addres=", origin_addres, "; to_address=", to_address, "; value_ether=", value_ether);
+        process.exit(1);
     }
 }
 
 
 // 传入参数
-    // provider
-    // targetGasPrice 单位为gwei，数字类型
-    // intervalTime 默认5秒轮训一次
+// provider
+// targetGasPrice 单位为gwei，数字类型
+// intervalTime 默认5秒轮训一次
 // 传出参数 { currentBlockGasPrice } 字符串
-const whileGasPrice = async (provider, targetGasPrice, intervalTime = 5000) => {
+const loopGetTargetGasPrice = async (provider, targetGasPrice, intervalTime = 5000) => {
     targetGasPrice = parseFloat(targetGasPrice);
     while (true) {
         const jsonStr = await getGasPrice(provider);
         const currentBlockGasPrice = parseFloat(JSON.parse(jsonStr).gasPrice);
         // const currentBlockGasPrice_obj = ethers.utils.parseUnits(currentBlockGasPrice, "gwei");
 
-        console.log("currentBlockGasPrice = " + currentBlockGasPrice, "; targetGasPrice = ", targetGasPrice);
+        console.log("loopGetTargetGasPrice: currentBlockGasPrice = " + currentBlockGasPrice, "; targetGasPrice = ", targetGasPrice);
 
         // console.log(typeof parseFloat(currentBlockGasPrice));
         // console.log(typeof targetGasPrice);
-        if (targetGasPrice > currentBlockGasPrice){
-            return JSON.stringify({currentBlockGasPrice});
+        if (targetGasPrice > currentBlockGasPrice) {
+            return JSON.stringify({ currentBlockGasPrice });
         }
 
         await utils.delay(intervalTime);
@@ -164,11 +162,11 @@ const whileGasPrice = async (provider, targetGasPrice, intervalTime = 5000) => {
 }
 
 export { sendTx, transferSimple, transferExact };
-export { initWallet, getBalance, getGasPrice, getProviderStatus, whileGasPrice };
+export { initWallet, getBalance, getGasPrice, getProviderStatus, loopGetTargetGasPrice };
 
 (async _ => {
     // await testCoinContract();
     // const ethersProvider = new ethers.providers.getDefaultProvider();
-    // await whileGasPrice(ethersProvider, 44);
+    // await loopGetTargetGasPrice(ethersProvider, 44);
 
 })()
