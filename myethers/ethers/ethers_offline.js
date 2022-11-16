@@ -17,20 +17,19 @@ const generateEthWallet = _ => {
     let mnemonic = wallet.mnemonic;
     // let mnemonic = wallet.mnemonic.phrase
     let json = JSON.stringify({ address, private_key, mnemonic });
-    console.log(wallet);
     // console.log(json);
     return json;
 }
 
 
 // 批量生成钱包，写入指定的文件内
-const generateEthWalletFor =  (num, path) => {
-    fs.writeFileSync(path, '[\n');
+const generateMultiEthWallet = (num, path) => {
+    fs.writeFileSync(path, '[');
     for (let i = 0; i < num; i++) {
         let wallet_json_str = generateEthWallet();
         // console.log(wallet_json_str);
         fs.appendFileSync(path, wallet_json_str);
-        if ( i < num - 1 ){
+        if (i < num - 1) {
             fs.appendFileSync(path, ',\n');
         }
     }
@@ -44,7 +43,7 @@ const generateEthWalletFor =  (num, path) => {
 
 
 
-export { generateEthWallet, generateEthWalletFor };
+export { generateEthWallet, generateMultiEthWallet };
 
 
 // BigNumber 转为

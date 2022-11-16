@@ -52,13 +52,6 @@ const test_transferExact = async () => {
     // await ethers_online.transferExact(ethWallet, wallet_address, value_ether, sentWait, maxFeePerGas_gwei, maxPriorityFeePerGas_gwei);
 }
 
-const batchCreateWallet = _ => {
-    // 批量创建钱包
-    // const ethWallet = new ethers.Wallet(wallet_private_key).connect(ethersProvider);
-    // const data = fs.readFileSync('./local_wallet.json', 'utf8');
-    // const data_arr_obj = JSON.parse(data);
-}
-
 const batchTransfer = _ => {
     // 批量发送交易
     // const data = fs.readFileSync('./local_wallet.json', 'utf8');
@@ -80,6 +73,8 @@ const batchTransfer = _ => {
     await ethers_online.getProviderStatus(ethersProvider);
     // console.log(await ethers_online.getGasPrice(ethersProvider));
 
-    await ethers_online.loopGetTargetGasPrice(ethersProvider, maxFeePerGas_gwei, 15000);
-    await test_transferExact_all(origin_address, origin_private_key, to_address);
+    // await ethers_online.loopGetTargetGasPrice(ethersProvider, maxFeePerGas_gwei, 15000);
+    // await test_transferExact_all(origin_address, origin_private_key, to_address);
+
+
 })()
