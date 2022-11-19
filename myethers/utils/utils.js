@@ -9,11 +9,11 @@ const getZksyncContentHashByCid = (cid) => {
     return JSON.stringify({contentH});
 }
 
-const randomNum = async (maxNum) => {
+const randomNum = (maxNum) => {
     // 随机数
     // const random = Math.random();  // 小于1的随机数
     // const random_1 = random.toFixed(5); // 取5位小数，并且转为字符串
-    Math.floor(Math.random() * maxNum + 1) // 取1到 maxNum 的随机数
+    return Math.floor(Math.random() * maxNum + 1) // 取1到 maxNum 的随机数
 }
 
 // 示范 await delay(1000); // 等待1秒

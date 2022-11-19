@@ -69,6 +69,25 @@ const batchTransfer = _ => {
 }
 
 
+const checkBalance = async _ => {
+    const data = fs.readFileSync('./.local_wallet.json', 'utf8');
+    const data_arr_obj = JSON.parse(data);
+    
+    
+    // 批量查余额
+    let total_ether = 0;
+    for (let i = 0; i < 10; i++){
+        let to_address = data_arr_obj[i].address;
+        const result = await ethers_online.getBalance(ethersProvider, to_address);
+        const jsonObj = JSON.parse(result);
+        jsonObj.seq = i;
+        console.log(JSON.stringify(jsonObj));
+        total_ether += parseFloat(jsonObj.balance);
+    }
+    console.log(total_ether, "ETH");
+}
+
+
 (async _ => {
     await ethers_online.getProviderStatus(ethersProvider);
     // console.log(await ethers_online.getGasPrice(ethersProvider));
