@@ -24,6 +24,7 @@ const getProviderStatus = async (provider) => {
     console.log("====================\n");
 }
 
+// 发送交易
 // const txRaw = {
 //     to: toAddress,
 //     value: ethers.utils.parseEther('0.01')
@@ -53,6 +54,7 @@ const sendTx = async (wallet, txRaw, waitFlag = true) => {
     return JSON.stringify({ blockNumber, gasUsed, effectiveGasPrice_Gwei, tx_fee_eth });
 }
 
+// 获取钱包余额
 // const address = '0x111';
 // const ethersProvider = new ethers.providers.JsonRpcProvider(ethereum_url);
 const getBalance = async (ethersProvider, address) => {
@@ -64,8 +66,9 @@ const getBalance = async (ethersProvider, address) => {
     return JSON.stringify({ balance, unit, address });
 }
 
+// 查看网络当前的gas费情况
 // const provider = new ethers.providers.JsonRpcProvider(ethereum_url);
-const getGasPrice = async (provider) => {
+const getNetGasPrice = async (provider) => {
 
     // Returns the current recommended FeeData to use in a transaction.
     const feeData = await provider.getFeeData()
@@ -75,16 +78,17 @@ const getGasPrice = async (provider) => {
     //   maxFeePerGas: { BigNumber: "45022068180" },
     //   maxPriorityFeePerGas: { BigNumber: "1500000000" }
     // }
+    const recommendGasPrice = ethers.utils.formatUnits(feeData.gasPrice, "gwei"); // const gasPrice = ethers.utils.formatUnits(await provider.getGasPrice(), "gwei");
+    const lastBaseFeePerGas = ethers.utils.formatUnits(feeData.lastBaseFeePerGas, "gwei");
     const maxFeePerGas = ethers.utils.formatUnits(feeData.maxFeePerGas, "gwei");
     const maxPriorityFeePerGas = ethers.utils.formatUnits(feeData.maxPriorityFeePerGas, "gwei");
-    const gasPrice = ethers.utils.formatUnits(feeData.gasPrice, "gwei");
-    // const gasPrice = ethers.utils.formatUnits(await provider.getGasPrice(), "gwei");
 
-    // console.log("gasPrice= " + gasPrice +  "Gwei");
+    // console.log("gasPrice_recommend= " + gasPrice +  "Gwei");
+    // console.log("lastBaseFeePerGas= " + gasPrice +  "Gwei");
     // console.log("maxFeePerGas_recommend= " + maxFeePerGas + " Gwei")
     // console.log("maxPriorityFeePerGas_recommend= " + maxPriorityFeePerGas + " Gwei");
 
-    return JSON.stringify({ gasPrice, maxFeePerGas, maxPriorityFeePerGas });
+    return JSON.stringify({ recommendGasPrice, lastBaseFeePerGas, maxFeePerGas, maxPriorityFeePerGas });
 }
 
 // const estimateGas = async (provider) => {
@@ -101,7 +105,7 @@ const getGasPrice = async (provider) => {
 //     value: parseEther("1.0")
 //   });
 
-
+// 转账
 const transferSimple = async (wallet, toAddress, valueEther, waitFlag = true) => {
     const txRaw = {
         to: toAddress,
@@ -112,7 +116,7 @@ const transferSimple = async (wallet, toAddress, valueEther, waitFlag = true) =>
 }
 
 
-// 定制化交易手续费，轮训等待baseFee降低，默认间隔10秒
+// 转账，定制化交易手续费
 const transferExact = async (wallet, to_address, value_ether, waitFlag = true, maxFeePerGas_gwei = '10', maxPriorityFeePerGas_gwei = '1') => {
     const value = ethers.utils.parseEther(value_ether);
     const maxFeePerGas = ethers.utils.parseUnits(maxFeePerGas_gwei, "gwei");
@@ -136,25 +140,24 @@ const transferExact = async (wallet, to_address, value_ether, waitFlag = true, m
     }
 }
 
-
-// 传入参数
-// provider
-// targetGasPrice 单位为gwei，数字类型
-// intervalTime 默认5秒轮训一次
-// 传出参数 { currentBlockGasPrice } 字符串
-const loopGetTargetGasPrice = async (provider, targetGasPrice, intervalTime = 5000) => {
+/**
+ * @description 轮训直到gas费低于目标值
+ * @param {Object} provider
+ * @param {string} targetGasPrice 期待的 GasPrice_gwei
+ * @param {number=5000} [intervalTime=14000] 轮训的间隔（毫秒）
+ * 
+ * @return {recommendGasPrice} 返回数字类型的gwei单位的值
+ */
+const loopGetTargetGasPrice = async (provider, targetGasPrice, intervalTime = 14000) => {
     targetGasPrice = parseFloat(targetGasPrice);
     while (true) {
-        const jsonStr = await getGasPrice(provider);
-        const currentBlockGasPrice = parseFloat(JSON.parse(jsonStr).gasPrice);
-        // const currentBlockGasPrice_obj = ethers.utils.parseUnits(currentBlockGasPrice, "gwei");
+        const jsonStr = await getNetGasPrice(provider);
+        const recommendGasPrice = parseFloat(JSON.parse(jsonStr).recommendGasPrice);
 
-        console.log("loopGetTargetGasPrice: currentBlockGasPrice = " + currentBlockGasPrice, "; targetGasPrice = ", targetGasPrice);
-
-        // console.log(typeof parseFloat(currentBlockGasPrice));
-        // console.log(typeof targetGasPrice);
-        if (targetGasPrice > currentBlockGasPrice) {
-            return JSON.stringify({ currentBlockGasPrice });
+        console.log("loopGetTargetGasPrice: recommendGasPrice = " + recommendGasPrice, "; targetGasPrice = ", targetGasPrice);
+        
+        if (targetGasPrice > recommendGasPrice) {
+            return recommendGasPrice;
         }
 
         await utils.delay(intervalTime);
@@ -162,11 +165,10 @@ const loopGetTargetGasPrice = async (provider, targetGasPrice, intervalTime = 50
 }
 
 export { sendTx, transferSimple, transferExact };
-export { initWallet, getBalance, getGasPrice, getProviderStatus, loopGetTargetGasPrice };
+export { initWallet, getBalance, getNetGasPrice, getProviderStatus, loopGetTargetGasPrice };
 
 (async _ => {
-    // await testCoinContract();
+    // Test
     // const ethersProvider = new ethers.providers.getDefaultProvider();
     // await loopGetTargetGasPrice(ethersProvider, 44);
-
 })()

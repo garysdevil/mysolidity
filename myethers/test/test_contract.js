@@ -62,44 +62,6 @@ const testCoinContract = async _ => {
     console.log(receipt);
 }
 
-const xenContract = async _ => {
-    const abi = [
-        "function claimRank(uint256 term)",
-        "function getCurrentMaxTerm() view returns (uint)"
-    ];
-    const xenMainnetAddress = "0x06450dEe7FD2Fb8E39061434BAbCFC05599a6Fb8";
-    const xenTestnetAddress = "0x1E74E69B25c713a6908081727F0b4C2b8d38D766";
-
-    const xenContract = new ethers.Contract(xenTestnetAddress, abi, ethersProvider);
-    
-
-    const one_day_big = ethers.BigNumber.from("86400");
-    const second_big = await xenContract.getCurrentMaxTerm(); // 返回秒
-    console.log(second_big.div(one_day_big).toString());
-
-
-    console.log(await ethersProvider.getTransactionCount(wallet_address_a)); // 获取这个钱包成功交易的nonce值+1
-
-    const wallet = ethers_online.initWallet(ethersProvider, wallet_private_key);;
-    const xenWithSigner = xenContract.connect(wallet.signer);
-
-    const term_day = 416;
-    // const term_big = ethers.BigNumber.from("416") // ethers.BigNumber.from(term_day).mul(ethers.BigNumber.from("86400"));
-    const estimateGas = await xenWithSigner.estimateGas.claimRank(term_day);
-    console.log("estimateGas:", estimateGas.toNumber());
-    let overrides = {
-        gasLimit: estimateGas,
-        maxFeePerGas: ethers.utils.parseUnits('11', 'gwei'),
-        maxPriorityFeePerGas: ethers.utils.parseUnits('2', 'gwei'),
-        nonce: (await ethersProvider.getTransactionCount(wallet_address_a))
-    };
-    const tx = await xenWithSigner.claimRank(term_day, overrides);
-    console.log(tx);
-    const receipt = await tx.wait();
-    console.log(receipt)
-}
-
-
 
 const testParaSpaceContract = async (wallet_private_key, wallet_address) => {
     // 以下合约地址皆为测试网地址
@@ -169,7 +131,6 @@ const testParaSpaceContract = async (wallet_private_key, wallet_address) => {
     const wallet_address_a = config.wallet_address_a;
 
     // await testCoinContract();
-    // await xenContract();
 
 
     await testParaSpaceContract();

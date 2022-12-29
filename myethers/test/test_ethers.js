@@ -16,7 +16,7 @@ const ethersProvider = new ethers.providers.JsonRpcProvider(ethereum_url);
 
 // 转出钱包的所有余额
 const test_transferExact_all = async (origin_address, origin_private_key, to_address) => {
-    // // 轮训直到gas价格小于目标值
+    // // 轮训直到 maxFeePerGas_gwei 大于 baseFeePerGas_gwei
     // const jsonStr = await ethers_online.loopGetTargetGasPrice(ethersProvider, maxFeePerGas_gwei, 15000);
 
     let maxFeePerGas_gwei = 11;
@@ -40,7 +40,7 @@ const test_transferExact_all = async (origin_address, origin_private_key, to_add
     console.log("结果", txFee);
 }
 
-// 以指定的gas价格发送一笔交易
+// 以指定的gas价格发送一笔转账交易
 const test_transferExact = async () => {
     // const to_address = wallet_address_a;
     // const value_ether = '0.01';
@@ -52,20 +52,19 @@ const test_transferExact = async () => {
     // await ethers_online.transferExact(ethWallet, wallet_address, value_ether, sentWait, maxFeePerGas_gwei, maxPriorityFeePerGas_gwei);
 }
 
-const batchTransfer = _ => {
+const batchTx = async _ => {
     // 批量发送交易
-    // const data = fs.readFileSync('./local_wallet.json', 'utf8');
-    // const data_arr_obj = JSON.parse(data);
-    // const value_ether = '1';
-    // const maxFeePerGas_gwei = '12';
-    // const maxPriorityFeePerGas_gwei = '0.1';
-    // await ethers_online.getBalance(ethersProvider, to_address);
-    // for (let i =0; i < 10; i++){
-    //     let to_address = data_arr_obj[i].address;
-    //     console.log(i, "to_address=", to_address)
-    //     await myTransfer(ethWallet, to_address, value_ether, maxFeePerGas_gwei, maxPriorityFeePerGas_gwei);
-    //     await ethers_online.getBalance(ethersProvider, to_address);
-    // }
+    const data = fs.readFileSync('./local_wallet.json', 'utf8');
+    const data_arr_obj = JSON.parse(data);
+    const value_ether = '1';
+    const maxFeePerGas_gwei = '12';
+    const maxPriorityFeePerGas_gwei = '0.1';
+    await ethers_online.getBalance(ethersProvider, to_address);
+    for (let i =0; i < 10; i++){
+        let to_address = data_arr_obj[i].address;
+        console.log(i, "to_address=", to_address)
+        // 具体的交易
+    }
 }
 
 
@@ -90,10 +89,10 @@ const checkBalance = async _ => {
 
 (async _ => {
     await ethers_online.getProviderStatus(ethersProvider);
-    // console.log(await ethers_online.getGasPrice(ethersProvider));
+    console.log(await ethers_online.getNetGasPrice(ethersProvider));
 
-    // await ethers_online.loopGetTargetGasPrice(ethersProvider, maxFeePerGas_gwei, 15000);
+    // let baseFeePerGas_gwei = 11;
+    // await ethers_online.loopGetTargetGasPrice(ethersProvider, baseFeePerGas_gwei, 15000);
     // await test_transferExact_all(origin_address, origin_private_key, to_address);
-
 
 })()

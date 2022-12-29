@@ -22,7 +22,8 @@ const sendGetRequest = async (url) => {
         return resp.data;
     } catch (err) {
         // Handle Error Here
-        console.error(err);
+
+        console.error("===Request Error", err, "===Request Error.");
     }
 };
 
